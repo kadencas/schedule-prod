@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 
-export default function SignUpPage() {
+// Create a separate component that uses useSearchParams
+function SignUpForm() {
   const searchParams = useSearchParams();
   const inviteToken = searchParams.get("invite") || "";
 
@@ -82,5 +83,14 @@ export default function SignUpPage() {
         </form>
       </div>
     </div>
+  );
+}
+
+// Main page component with Suspense boundary
+export default function SignUpPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <SignUpForm />
+    </Suspense>
   );
 }
