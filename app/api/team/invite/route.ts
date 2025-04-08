@@ -38,14 +38,14 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    const inviteUrl = `http://localhost:3000/signup?invite=${inviteToken}`;
+    const inviteUrl = `https://schedule-prod.vercel.app/account-management/signup?invite=${inviteToken}`;
 
     const mailOptions = {
-      from: `"Your Company Name" <${process.env.SMTP_USER}>`,
+      from: `"When Scheduling" <${process.env.SMTP_USER}>`,
       to: email,
       subject: "You're Invited to Join Our Team!",
       html: `
-        <p>Hello ${name},</p>
+        <p>Hey ${name},</p>
         <p>You have been invited to join our team. Click the link below to accept the invitation and sign up:</p>
         <p><a href="${inviteUrl}">Join the Team</a></p>
         <p>If you did not expect this invitation, please ignore this email.</p>
