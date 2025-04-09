@@ -99,8 +99,8 @@ const ShiftBox: React.FC<ShiftBoxProps> = ({
     setHasChanges(true);
   };
 
-  const handleDeleteSegment = (id: string) => {
-    setLocalSegments((prevSegments) => prevSegments.filter((seg) => seg.id !== id));
+  const handleDeleteSegment = (segmentId: string) => {
+    setLocalSegments(prev => prev.filter(seg => seg.id !== segmentId));
     setHasChanges(true);
   };
 

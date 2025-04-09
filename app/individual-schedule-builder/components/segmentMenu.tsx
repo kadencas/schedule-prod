@@ -150,7 +150,7 @@ const SegmentEditorMenu = forwardRef<HTMLDivElement, SegmentEditorMenuProps>(({
         <div className="space-y-1.5">
           <label className="flex items-center text-xs font-medium text-gray-500">
             <FaTag className="mr-1.5" size={12} />
-            <span>Segment Name</span>
+            <span>Custom Name</span>
           </label>
           <input
             type="text"
@@ -163,7 +163,7 @@ const SegmentEditorMenu = forwardRef<HTMLDivElement, SegmentEditorMenuProps>(({
         <div className="space-y-1.5">
           <label className="flex items-center text-xs font-medium text-gray-500">
             <MdFormatColorFill className="mr-1.5" size={14} />
-            <span>Color</span>
+            <span>Optional Text</span>
           </label>
           <div className="grid grid-cols-6 gap-2">
             {colorOptions.map((color) => (
