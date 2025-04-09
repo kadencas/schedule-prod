@@ -195,19 +195,33 @@ export default function Page() {
     setShowDepartmentFilter(false);
   };
 
+  const terms = searchTerm
+  .toLowerCase()
+  .split(/[\s,]+/)   
+  .filter(Boolean);
+
   const filteredEmployees = useMemo(() => {
     if (!employees) return [];
-
-    return employees.filter(employee => {
-      const matchesSearch = employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (employee.department || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (employee.location || "").toLowerCase().includes(searchTerm.toLowerCase());
-
-      const matchesDepartment = !departmentFilter || employee.department === departmentFilter;
-
+  
+    return employees.filter((employee) => {
+      const haystack = [
+        employee.name,
+        employee.department,
+        employee.location,
+      ]
+        .join(" ")
+        .toLowerCase();
+  
+      const matchesSearch =
+        terms.length === 0 || terms.some((t) => haystack.includes(t));
+  
+      const matchesDepartment =
+        !departmentFilter || employee.department === departmentFilter;
+  
       return matchesSearch && matchesDepartment;
     });
   }, [employees, searchTerm, departmentFilter]);
+  
 
   if (loading || status === "loading") {
     return (
