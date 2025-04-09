@@ -150,7 +150,7 @@ const SegmentEditorMenu = forwardRef<HTMLDivElement, SegmentEditorMenuProps>(({
         <div className="space-y-1.5">
           <label className="flex items-center text-xs font-medium text-gray-500">
             <FaTag className="mr-1.5" size={12} />
-            <span>Custom Name</span>
+            <span>Notes (optional)</span>
           </label>
           <input
             type="text"
@@ -160,38 +160,7 @@ const SegmentEditorMenu = forwardRef<HTMLDivElement, SegmentEditorMenuProps>(({
             placeholder="Enter segment name"
           />
         </div>
-        <div className="space-y-1.5">
-          <label className="flex items-center text-xs font-medium text-gray-500">
-            <MdFormatColorFill className="mr-1.5" size={14} />
-            <span>Optional Text</span>
-          </label>
-          <div className="grid grid-cols-6 gap-2">
-            {colorOptions.map((color) => (
-              <motion.button
-                key={color}
-                onClick={() => onColorChange(color)}
-                className="cursor-pointer aspect-square rounded-md shadow-sm flex items-center justify-center"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-                style={{
-                  backgroundColor: color,
-                  border: localColor === color ? "2px solid rgb(79, 70, 229)" : "1px solid rgba(0,0,0,0.1)",
-                  boxShadow: localColor === color ? "0 0 0 2px rgba(79, 70, 229, 0.3)" : "none"
-                }}
-              >
-                {localColor === color && (
-                  <motion.div 
-                    initial={{ opacity: 0, scale: 0 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="text-white"
-                  >
-                    <LuCheck size={14} />
-                  </motion.div>
-                )}
-              </motion.button>
-            ))}
-          </div>
-        </div>
+        
         <div className="flex justify-end pt-2 border-t border-gray-100 mt-3">
           <button
             onClick={onCancel}
