@@ -63,6 +63,7 @@ const SegmentBox: React.FC<SegmentBoxProps> = ({
   const nodeRef = useRef<HTMLDivElement>(null!);
   const editButtonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
+  const popupRef = useRef<HTMLDivElement | null>(null);
   const [position, setPosition] = useState({ x: 0, y: 4 });
   const [isDragging, setIsDragging] = useState(false);
   const [leftPx, setLeftPx] = useState(segment.start);
@@ -72,6 +73,8 @@ const SegmentBox: React.FC<SegmentBoxProps> = ({
   const [localColor, setLocalColor] = useState(segment.color);
   const [localEntity, setLocalEntity] = useState(segment.entity);
   const dragOffsetRef = useRef({ x: 0, y: 0 });
+  const [showPopup, setShowPopup] = useState(false);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const colorOptions = [
     "#6BA0E5",
@@ -223,6 +226,131 @@ const SegmentBox: React.FC<SegmentBoxProps> = ({
   const EntityIcon = localEntity?.icon && iconMap[localEntity.icon] ? iconMap[localEntity.icon] : null;
   const segmentDuration = minutesPerPixel ? widthPx * minutesPerPixel : 0;
 
+  const canShowEntityName = () => {
+    return EntityIcon && localEntity?.name && segmentDuration >= 50;
+  };
+
+  const getEntityNameDisplay = () => {
+    if (!localEntity?.name) return "";
+    
+    if (segmentDuration < 60) return localEntity.name.substring(0, 6) + (localEntity.name.length > 6 ? "..." : "");
+    if (segmentDuration < 75) return localEntity.name.substring(0, 10) + (localEntity.name.length > 10 ? "..." : "");
+    return localEntity.name;
+  };
+
+  const getTimeDisplay = () => {
+    if (!segmentStartTimeStr || !segmentEndTimeStr) return "";
+    
+    if (segmentDuration < 45) return segmentStartTimeStr;
+    
+    if (segmentDuration < 60) {
+      const startHour = segmentStartTimeStr.split(':')[0];
+      const endTime = segmentEndTimeStr;
+      return `${startHour}-${endTime}`;
+    }
+    
+    return `${segmentStartTimeStr} - ${segmentEndTimeStr}`;
+  };
+
+  const getUserDisplay = () => {
+    if (!user) return "";
+    
+    if (segmentDuration < 45 && segmentStartTimeStr) {
+      return user.charAt(0);
+    }
+    
+    if (segmentDuration < 65 && segmentStartTimeStr) {
+      const maxLength = Math.min(Math.floor(segmentDuration / 10), user.length);
+      return user.substring(0, maxLength) + (user.length > maxLength ? "..." : "");
+    }
+    
+    return user;
+  };
+
+  const getDurationDisplay = () => {
+    if (!minutesPerPixel) return "";
+    
+    const durationMinutes = widthPx * minutesPerPixel;
+    const hours = Math.floor(durationMinutes / 60);
+    const minutes = Math.round(durationMinutes % 60);
+    
+    if (hours === 0) {
+      return `${minutes} min`;
+    } else if (minutes === 0) {
+      return `${hours} hr`;
+    } else {
+      return `${hours} hr ${minutes} min`;
+    }
+  };
+
+  const handleMouseEnter = () => {
+    if (isDragging) return;
+    
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+    }
+    
+    hoverTimeoutRef.current = setTimeout(() => {
+      setShowPopup(true);
+      updatePopupPosition();
+    }, 1000); // 1000 delay before showing popup
+  };
+
+  const handleMouseLeave = () => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+    setShowPopup(false);
+  };
+
+  const updatePopupPosition = useCallback(() => {
+    if (!nodeRef.current || !popupRef.current) return;
+    
+    const rect = nodeRef.current.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const popupWidth = 250;
+    const popupHeight = 180;
+    
+    const offsetX = 10;
+    const offsetY = 0;
+    
+    let top = rect.top - popupHeight - offsetY;
+    let left = rect.left + (rect.width / 2) - (popupWidth / 2) + offsetX;
+    
+    if (left < 10) left = 10;
+    if (left + popupWidth > viewportWidth - 10) {
+      left = viewportWidth - popupWidth - 10;
+    }
+    
+    if (top < 10) top = 10;
+    if (top + popupHeight > viewportHeight - 10) {
+      top = viewportHeight - popupHeight - 10;
+    }
+    
+    popupRef.current.style.top = `${top}px`;
+    popupRef.current.style.left = `${left}px`;
+  }, []);
+
+  useEffect(() => {
+    if (showPopup) {
+      updatePopupPosition();
+      window.addEventListener('resize', updatePopupPosition);
+      return () => {
+        window.removeEventListener('resize', updatePopupPosition);
+      };
+    }
+  }, [showPopup, updatePopupPosition]);
+
+  useEffect(() => {
+    return () => {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const getBackgroundColor = () => {
     if (!localColor || localColor === '#ffffff' || localColor === 'white') {
       return 'rgba(255, 255, 255, 1.0)';
@@ -237,7 +365,7 @@ const SegmentBox: React.FC<SegmentBoxProps> = ({
 
   const getBorderColor = () => {
     if (!localColor || localColor === '#ffffff' || localColor === 'white') {
-      return '#e2e8f0'; // light gray border for white segments
+      return '#e2e8f0';
     }
 
     const r = Math.max(0, parseInt(localColor.substring(1, 3), 16) - 40);
@@ -270,6 +398,8 @@ const SegmentBox: React.FC<SegmentBoxProps> = ({
         ref={nodeRef}
         className={`${className} absolute h-full select-none`}
         style={style}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       >
         <ResizableBox
           width={widthPx}
@@ -296,21 +426,21 @@ const SegmentBox: React.FC<SegmentBoxProps> = ({
             }}
           >
             <div className="flex items-center justify-between">
-              <div className="flex items-center">
+              <div className="flex items-center overflow-hidden">
                 {EntityIcon && (
                   <div className="flex items-center bg-white/80 px-1.5 py-0.5 rounded-md shadow-sm">
-                    <EntityIcon size={13} className="text-gray-700" />
-                    {localEntity?.name && segmentDuration >= 79 && (
+                    <EntityIcon size={13} className="text-gray-700 flex-shrink-0" />
+                    {canShowEntityName() && (
                       <span className="ml-1 text-xs font-medium text-gray-700 truncate max-w-[90px]">
-                        {localEntity.name}
+                        {getEntityNameDisplay()}
                       </span>
                     )}
                   </div>
                 )}
               </div>
               {!readOnly && (
-                <div>
-                  {segmentDuration >= 31 && (
+                <div className="flex-shrink-0 flex">
+                  {segmentDuration >= 25 && (
                     <button
                       ref={editButtonRef}
                       onClick={toggleEditor}
@@ -321,7 +451,7 @@ const SegmentBox: React.FC<SegmentBoxProps> = ({
                     </button>
                   )}
 
-                  {segmentDuration >= 51 && (
+                  {segmentDuration >= 40 && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -335,57 +465,121 @@ const SegmentBox: React.FC<SegmentBoxProps> = ({
                     </button>
                   )}
                 </div>
-
-
               )}
             </div>
-            {segmentDuration >= 31 && (
-              <div className="flex justify-center items-center flex-1">
-                <span className="text-xs font-medium text-gray-700 truncate max-w-[95%]">
-                  {localLabel}
+            
+            {segmentStartTimeStr && segmentEndTimeStr && segmentDuration >= 30 && (
+              <div className="flex justify-center items-center">
+                <span className={`text-center font-medium text-gray-600 ${segmentDuration < 45 ? 'text-[9px]' : 'text-[10px]'}`}>
+                  {getTimeDisplay()}
                 </span>
               </div>
             )}
-            <div className="flex items-center justify-between">
-              {readOnly && user && segmentDuration >= 39 && (
-                <div className="flex items-center">
-                  <FaUser size={10} className="text-gray-600 mr-1" />
-                  <span className="text-[10px] font-medium text-gray-600">
-                    {user}
+            
+            {readOnly && user && segmentDuration >= 30 && (
+              <div className="flex items-center justify-center w-full text-[10px] font-medium text-gray-600">
+                <div className="flex items-center flex-shrink-0 overflow-hidden">
+                  <FaUser size={10} className="text-gray-600 mr-0.5 flex-shrink-0" />
+                  <span className="truncate">
+                    {getUserDisplay()}
                   </span>
                 </div>
-              )}
-
-              {segmentStartTimeStr && segmentEndTimeStr && segmentDuration >= 59 && (
-                <div className="text-[10px] font-medium text-gray-600">
-                  {`${segmentStartTimeStr} - ${segmentEndTimeStr}`}
-                </div>
-              )}
-            </div>
-            {!readOnly && segmentDuration > 95 && (
+              </div>
+            )}
+            
+            {!readOnly && segmentDuration > 60 && (
               <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-20 pointer-events-none">
                 <MdDragIndicator size={16} className="text-gray-700" />
               </div>
             )}
-            {showEditor && !readOnly &&
-              ReactDOM.createPortal(
-                <SegmentEditorMenu
-                  ref={menuRef}
-                  initialPopupStyle={{ position: "absolute", zIndex: 1000 }}
-                  localLabel={localLabel}
-                  onLabelChange={setLocalLabel}
-                  localColor={localColor}
-                  onColorChange={setLocalColor}
-                  onEntityChange={setLocalEntity}
-                  colorOptions={colorOptions}
-                  onCommit={commitChanges}
-                  onCancel={cancelChanges}
-                  entities={entities}
-                />,
-                document.body
-              )}
           </div>
         </ResizableBox>
+
+        {showPopup && !isDragging && 
+          ReactDOM.createPortal(
+            <div 
+              ref={popupRef}
+              className="fixed z-50 w-[250px] bg-white rounded-md shadow-lg border border-gray-200 p-3 text-sm"
+              style={{ pointerEvents: 'none' }}
+              onMouseEnter={() => setShowPopup(false)}
+            >
+              <div className="space-y-2">
+                <div className="border-b pb-1.5 mb-1">
+                
+                  <div className="text-gray-800">
+                    <span className="font-semibold text-gray-600">Notes:</span> {localLabel || "Untitled Segment"}
+                  </div>
+                  <div className="text-xs text-gray-600 mt-1">
+                    Duration: {getDurationDisplay()}
+                  </div>
+                </div>
+
+                {localEntity && (
+                  <div className="flex items-start">
+                    <div className="w-20 text-xs text-gray-500">Entity:</div>
+                    <div className="flex items-center flex-1">
+                      {EntityIcon && (
+                        <EntityIcon size={14} className="text-gray-700 mr-1.5" />
+                      )}
+                      <span className="text-sm text-gray-700">
+                        {localEntity.name || "Unnamed"}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {segmentStartTimeStr && segmentEndTimeStr && (
+                  <div className="flex items-start">
+                    <div className="w-20 text-xs text-gray-500">Time:</div>
+                    <div className="text-sm text-gray-700">
+                      {`${segmentStartTimeStr} - ${segmentEndTimeStr}`}
+                    </div>
+                  </div>
+                )}
+
+                {user && (
+                  <div className="flex items-start">
+                    <div className="w-20 text-xs text-gray-500">User:</div>
+                    <div className="flex items-center">
+                      <FaUser size={12} className="text-gray-600 mr-1.5" />
+                      <span className="text-sm text-gray-700">{user}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              <div 
+                className="absolute w-4 h-4 bg-white border-b border-r border-gray-200 transform rotate-45"
+                style={{ 
+                  bottom: '-8px', 
+                  left: '50%', 
+                  marginLeft: '-8px',
+                  boxShadow: '2px 2px 2px rgba(0, 0, 0, 0.03)'
+                }}
+              />
+            </div>,
+            document.body
+          )
+        }
+
+        {showEditor && !readOnly &&
+          ReactDOM.createPortal(
+            <SegmentEditorMenu
+              ref={menuRef}
+              initialPopupStyle={{ position: "absolute", zIndex: 1000 }}
+              localLabel={localLabel}
+              onLabelChange={setLocalLabel}
+              localColor={localColor}
+              onColorChange={setLocalColor}
+              onEntityChange={setLocalEntity}
+              colorOptions={colorOptions}
+              onCommit={commitChanges}
+              onCancel={cancelChanges}
+              entities={entities}
+            />,
+            document.body
+          )
+        }
       </div>
     </Draggable>
   );
