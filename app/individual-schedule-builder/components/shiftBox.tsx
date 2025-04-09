@@ -309,7 +309,7 @@ const ShiftBox: React.FC<ShiftBoxProps> = ({
           onResize={!readOnly ? handleResize : undefined}
           onResizeStop={!readOnly ? handleResizeStop : undefined}
         >
-          <div className="w-full h-full bg-white/70 backdrop-blur-sm rounded-lg shadow-md overflow-hidden relative border border-gray-200">
+          <div className="w-full h-full backdrop-blur-sm rounded-lg shadow-md overflow-hidden relative border border-gray-200">
             <div className="shift-drag-handle h-[30px] bg-gradient-to-r from-blue-600 to-blue-500 flex items-center px-3 cursor-move relative">
               <div className="flex items-center flex-1">
                 <span className="text-white"><FaUser size={12} className="mr-2" /></span>
