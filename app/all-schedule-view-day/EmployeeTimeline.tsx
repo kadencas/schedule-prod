@@ -24,7 +24,7 @@ export default function EmployeeTimeline({
 
   const employeeShifts = useMemo(() => {
     if (!employee.shifts || !Array.isArray(employee.shifts)) return [];
-    
+
     return employee.shifts.map((shift) => ({
       ...shift,
       startTime: new Date(shift.startTime as string | number | Date),
@@ -53,15 +53,22 @@ export default function EmployeeTimeline({
       <div className="w-[70px] flex-shrink-0 pr-2">
         <div className="flex flex-col">
           <div className="flex items-center">
-            <div 
-              className="w-2 h-2 rounded-full mr-1.5 flex-shrink-0" 
+            <div
+              className="w-2 h-2 rounded-full mr-1.5 flex-shrink-0"
               style={{ backgroundColor: '#60a5fa' }}
             />
-            <span className="font-medium text-gray-700 text-xs truncate">
+            <span
+              className="
+                font-medium text-gray-700 text-xs
+                whitespace-normal    /* allow wrapping */
+                break-words          /* break very‑long words if needed        */
+                line-clamp-2
+              "
+            >
               {employee.name}
             </span>
           </div>
-          
+
           <div className="ml-3.5 mt-0.5">
             {employee.department && (
               <div className="text-[9px] text-gray-500 flex items-center">
@@ -69,7 +76,7 @@ export default function EmployeeTimeline({
                 <span className="truncate max-w-[55px]">{employee.department}</span>
               </div>
             )}
-            
+
             {employee.location && (
               <div className="text-[9px] text-gray-500 flex items-center">
                 <FiMapPin className="text-gray-400 mr-1" size={7} />
@@ -79,7 +86,7 @@ export default function EmployeeTimeline({
           </div>
         </div>
       </div>
-      
+
       <div className="flex-1 overflow-visible relative">
         <Timeline
           user={employee.name}
@@ -96,7 +103,7 @@ export default function EmployeeTimeline({
           onShiftSave={(shiftId, updatedData) => console.log('Shift save', shiftId, updatedData)}
           entities={entities}
         />
-        
+
         {!hasActivities && (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center opacity-40">

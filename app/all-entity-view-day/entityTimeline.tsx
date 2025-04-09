@@ -73,9 +73,16 @@ export default function EntityTimeline({
               style={{ backgroundColor: extendedEntity.color || '#60a5fa' }}
             />
             <div className="flex flex-col">
-              <span className="font-medium text-gray-700 text-xs truncate max-w-[60px]">
-                {entity.name}
-              </span>
+            <span
+              className="
+                font-medium text-gray-700 text-xs
+                whitespace-normal    /* allow wrapping */
+                break-words          /* break very‑long words if needed        */
+                line-clamp-2
+              "
+            >
+              {entity.name}
+            </span>
               {extendedEntity.type && (
                 <span className="text-[9px] text-gray-500">
                   {extendedEntity.type}
