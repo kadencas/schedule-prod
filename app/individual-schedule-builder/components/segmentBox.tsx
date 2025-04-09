@@ -300,7 +300,7 @@ const SegmentBox: React.FC<SegmentBoxProps> = ({
                 {EntityIcon && (
                   <div className="flex items-center bg-white/80 px-1.5 py-0.5 rounded-md shadow-sm">
                     <EntityIcon size={13} className="text-gray-700" />
-                    {localEntity?.name && segmentDuration >= 59 && (
+                    {localEntity?.name && segmentDuration >= 79 && (
                       <span className="ml-1 text-xs font-medium text-gray-700 truncate max-w-[90px]">
                         {localEntity.name}
                       </span>
@@ -310,27 +310,32 @@ const SegmentBox: React.FC<SegmentBoxProps> = ({
               </div>
               {!readOnly && (
                 <div>
-                  <button
-                    ref={editButtonRef}
-                    onClick={toggleEditor}
-                    onMouseDown={(e) => e.stopPropagation()}
-                    className="rounded-full p-1 hover:bg-white/50 transition-colors duration-200 focus:outline-none"
-                  >
-                    <FaEdit size={12} className="text-gray-600" />
-                  </button>
+                  {segmentDuration >= 31 && (
+                    <button
+                      ref={editButtonRef}
+                      onClick={toggleEditor}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      className="rounded-full p-1 hover:bg-white/50 transition-colors duration-200 focus:outline-none"
+                    >
+                      <FaEdit size={12} className="text-gray-600" />
+                    </button>
+                  )}
 
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDelete();           
-                    }}
-                    onMouseDown={(e) => e.stopPropagation()}
-                    className="ml-1 rounded-full p-1 hover:bg-white/50 transition-colors duration-200 focus:outline-none"
-                    title="Delete segment"
-                  >
-                    <FaTrash size={12} className="text-gray-600" />
-                  </button>
+                  {segmentDuration >= 51 && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete();
+                      }}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      className="ml-1 rounded-full p-1 hover:bg-white/50 transition-colors duration-200 focus:outline-none"
+                      title="Delete segment"
+                    >
+                      <FaTrash size={12} className="text-grey-600" />
+                    </button>
+                  )}
                 </div>
+
 
               )}
             </div>
@@ -342,7 +347,7 @@ const SegmentBox: React.FC<SegmentBoxProps> = ({
               </div>
             )}
             <div className="flex items-center justify-between">
-              {user && segmentDuration >= 59 && (
+              {readOnly && user && segmentDuration >= 39 && (
                 <div className="flex items-center">
                   <FaUser size={10} className="text-gray-600 mr-1" />
                   <span className="text-[10px] font-medium text-gray-600">
@@ -351,7 +356,7 @@ const SegmentBox: React.FC<SegmentBoxProps> = ({
                 </div>
               )}
 
-              {segmentStartTimeStr && segmentEndTimeStr && segmentDuration >= 79 && (
+              {segmentStartTimeStr && segmentEndTimeStr && segmentDuration >= 59 && (
                 <div className="text-[10px] font-medium text-gray-600">
                   {`${segmentStartTimeStr} - ${segmentEndTimeStr}`}
                 </div>
