@@ -12,6 +12,7 @@ interface EmployeeTimelineProps {
   entities: Entity[];
 }
 
+
 export default function EmployeeTimeline({
   employee,
   currentMonday,
@@ -21,6 +22,7 @@ export default function EmployeeTimeline({
 }: EmployeeTimelineProps) {
   const snapToGrid = true;
   const grid_height = 40;
+
 
   const employeeShifts = useMemo(() => {
     if (!employee.shifts || !Array.isArray(employee.shifts)) return [];
@@ -46,7 +48,6 @@ export default function EmployeeTimeline({
     initialWidth,
   } = useShiftManagement(employeeShifts, currentMonday, selectedDay);
 
-  const hasActivities = matchingShift && matchingShift.segments && matchingShift.segments.length > 0;
 
   return (
     <div className="relative overflow-visible flex items-stretch">
@@ -104,14 +105,7 @@ export default function EmployeeTimeline({
           entities={entities}
         />
 
-        {!hasActivities && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center opacity-40">
-              <FiCalendar className="mx-auto text-gray-300" size={12} />
-              <p className="text-[8px] text-gray-400 mt-0.5">No schedule</p>
-            </div>
-          </div>
-        )}
+        
       </div>
     </div>
   );
