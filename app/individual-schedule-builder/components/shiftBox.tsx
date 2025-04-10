@@ -360,10 +360,10 @@ const ShiftBox: React.FC<ShiftBoxProps> = ({
                           e.stopPropagation();
                           handleSaveChanges();
                         }}
-                        className="bg-green-600 hover:bg-green-700 text-white rounded-full p-1 transition-colors duration-200 focus:outline-none mr-1"
+                        className="flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-400 shadow-md transform hover:scale-105 font-medium text-xs"
                         title="Save changes"
                       >
-                        <FaCheck size={10} />
+                        Save <FaCheck size={10} />
                       </button>
                     )}
                     <MdDragIndicator className="text-white/60" size={16} />

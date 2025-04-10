@@ -1,7 +1,6 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import WeekDayToggle from "./components/weekDayToggle";
-import ShiftMenu from "./components/shiftMenu";
 import Timeline from "./components/timeline";
 import { useShiftManagement } from "./hooks/useShiftManagement";
 import { useUserShifts } from "./hooks/useUserShift";
@@ -16,7 +15,72 @@ import { useSession } from "next-auth/react";
 import { Shift } from "@/types/types";
 import { useEntities } from "./hooks/useEntities";
 import { motion } from "framer-motion";
-import { FiClock, FiCalendar, FiGrid, FiInfo } from "react-icons/fi";
+import { FiCalendar, FiGrid, FiInfo, FiPlus } from "react-icons/fi";
+
+const TimelineHeader = () => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
+  
+  useEffect(() => {
+    const updateWidth = () => {
+      if (containerRef.current) {
+        setContainerWidth(containerRef.current.offsetWidth);
+      }
+    };
+
+    updateWidth();
+    
+    window.addEventListener('resize', updateWidth);
+    
+    return () => {
+      window.removeEventListener('resize', updateWidth);
+    };
+  }, []);
+  
+  const numTicks = Math.floor(containerWidth / 25) + 2;
+  
+  return (
+    <div className="relative overflow-visible flex items-stretch h-6">
+      <div className="w-[75px] flex-shrink-0 pr-1"></div>
+      
+      <div 
+        ref={containerRef} 
+        className="flex-1 relative h-6 overflow-visible"
+      >
+        {Array.from({ length: numTicks }).map((_, i) => {
+          const leftPos = i * 25;
+          const isMajorTick = i % 4 === 0;
+          
+          if (isMajorTick) {
+            const hour = Math.floor(i / 4) + 9; 
+            const displayHour = hour > 12 ? hour - 12 : hour;
+            const amPm = hour >= 12 ? 'PM' : 'AM';
+            const hourLabel = `${displayHour}${amPm}`;
+            
+            return (
+              <div key={i}>
+                <div
+                  className="absolute w-[1px] h-2 bg-blue-400/40 bottom-0"
+                  style={{ left: leftPos - 75 }}
+                />
+                <div
+                  className="absolute transform -translate-x-1/2 text-[10px] text-gray-500 font-medium"
+                  style={{ 
+                    left: leftPos - 75,
+                    top: '0px',
+                  }}
+                >
+                  {hourLabel}
+                </div>
+              </div>
+            );
+          }
+          return null;
+        })}
+      </div>
+    </div>
+  );
+};
 
 export default function Page() {
   const [snapToGrid, setSnapToGrid] = useState(true);
@@ -239,10 +303,11 @@ export default function Page() {
           variants={containerVariants}
           initial="hidden"
           animate={isMounted ? "visible" : "hidden"}
-          className="flex flex-col space-y-2"
+          className="flex flex-col"
         >
           {/* Week Navigation */}
-          <motion.div variants={itemVariants} className="bg-white rounded-lg shadow-sm p-3 border border-gray-100">
+          <motion.div variants={itemVariants} className="bg-white rounded-lg rounded-b-none shadow-sm p-3 border border-b-0 border-gray-100">
+            <h2 className="text-lg font-bold mb-3">Day Selector & Editor</h2>
             <WeekDayToggle
               currentMonday={currentMonday}
               formattedMondayDate={formattedMondayDate}
@@ -254,35 +319,50 @@ export default function Page() {
           </motion.div>
 
           {/* Main Layout with Timeline and Shift Menu */}
-          <div className="flex flex-col md:flex-row gap-3">
+          <div className="flex flex-col md:flex-row">
             {/* Timeline Section - Minimalistic */}
             <motion.div 
               variants={itemVariants}
-              className="flex-grow bg-white rounded-lg shadow-sm p-3 border border-gray-100 overflow-hidden"
+              className="flex-grow bg-white rounded-lg rounded-t-none shadow-sm p-3 border border-t-0 border-gray-100 overflow-hidden"
             >
-              <div className="flex items-center justify-end mb-2">
-                <div className="flex items-center text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full">
-                  <FiGrid className="mr-1" size={10} />
-                  {snapToGrid ? "Snap to Grid" : "Free Movement"}
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center">
+                  {!matchingShift && (
+                    <motion.button
+                      onClick={handleAddShift}
+                      whileHover={{ backgroundColor: '#3b82f6', y: -1 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="flex items-center justify-center px-3 py-1.5 rounded-md 
+                        bg-blue-500 text-white font-medium text-sm transition-all"
+                    >
+                      <FiPlus className="mr-1.5" size={14} />
+                      Add Shift
+                    </motion.button>
+                  )}
                 </div>
               </div>
               
               <div className="relative">
-                <Timeline
-                  snapToGrid={snapToGrid}
-                  shiftSegments={shiftSegments}
-                  matchingShift={matchingShift}
-                  initialX={initialX}
-                  initialWidth={initialWidth}
-                  shiftStartTime={shiftStartTime}
-                  shiftEndTime={shiftEndTime}
-                  gridHeight={grid_height}
-                  readOnly={readOnly}
-                  onShiftSave={handleShiftChangesSaved}
-                  entities={entities}
-                  selectedDay={selectedDay}
-                  user={session?.user?.name || "Anonymous User"}
-                />
+                <div className="ml-2">
+                  <TimelineHeader />
+                </div>
+                <div className="ml-2">
+                  <Timeline
+                    snapToGrid={snapToGrid}
+                    shiftSegments={shiftSegments}
+                    matchingShift={matchingShift}
+                    initialX={initialX}
+                    initialWidth={initialWidth}
+                    shiftStartTime={shiftStartTime}
+                    shiftEndTime={shiftEndTime}
+                    gridHeight={grid_height}
+                    readOnly={readOnly}
+                    onShiftSave={handleShiftChangesSaved}
+                    entities={entities}
+                    selectedDay={selectedDay}
+                    user={session?.user?.name || "Anonymous User"}
+                  />
+                </div>
                 
                 {!matchingShift && (
                   <motion.div 
@@ -302,20 +382,25 @@ export default function Page() {
                     </div>
                   </motion.div>
                 )}
+                
+                <div className="flex justify-end mt-3">
+                  <div 
+                    onClick={() => setSnapToGrid(!snapToGrid)}
+                    className="flex items-center cursor-pointer gap-2 text-xs bg-blue-50 hover:bg-blue-100 text-blue-600 px-3 py-1 rounded-full transition-colors"
+                  >
+                    <div className={`relative inline-flex h-4 w-8 items-center rounded-full transition-colors ${
+                      snapToGrid ? 'bg-blue-500' : 'bg-gray-200'
+                    }`}>
+                      <span
+                        className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
+                          snapToGrid ? 'translate-x-4' : 'translate-x-1'
+                        }`}
+                      />
+                    </div>
+                    <span>{snapToGrid ? "Snap" : "Free"}</span>
+                  </div>
+                </div>
               </div>
-            </motion.div>
-            
-            {/* Simplified Shift Menu */}
-            <motion.div
-              variants={itemVariants}
-              className="w-full md:w-60 bg-white rounded-lg shadow-sm border border-gray-100 p-3"
-            >
-              <ShiftMenu
-                matchingShift={matchingShift}
-                snapToGrid={snapToGrid}
-                setSnapToGrid={setSnapToGrid}
-                onAddShift={handleAddShift}
-              />
             </motion.div>
           </div>
         </motion.div>
