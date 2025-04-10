@@ -11,6 +11,23 @@ interface ShiftTimesState {
   initialWidth: number;
 }
 
+
+function buildRuleForInfinitePast(shift: Shift): RRule {
+  const parsed = RRule.fromString(shift.recurrenceRule!);
+
+  // Preserve the real time‑of‑day of the shift
+  const first = new Date(shift.startTime);
+  const ancient = new Date(
+    Date.UTC(2020, 0, 1,               // 2020‑01‑01
+             first.getUTCHours(),
+             first.getUTCMinutes(),
+             first.getUTCSeconds())
+  );
+
+  parsed.options.dtstart = ancient;
+  return new RRule(parsed.options);     // rebuild so change sticks
+}
+
 export function useEntityShiftManagement(
   userShifts: Shift[],
   entityShifts: Shift[],
@@ -40,7 +57,7 @@ export function useEntityShiftManagement(
       }
 
       try {
-        const rule = RRule.fromString(shift.recurrenceRule);
+        const rule = buildRuleForInfinitePast(shift);
         const rangeStart = new Date(date);
         rangeStart.setDate(date.getDate() - 1);
         rangeStart.setHours(0, 0, 0, 0);

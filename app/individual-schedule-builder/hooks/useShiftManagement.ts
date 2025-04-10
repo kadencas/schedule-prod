@@ -30,6 +30,22 @@ export function useShiftManagement(
     initialWidth: 100,
   });
 
+  function buildRuleForInfinitePast(shift: Shift) {
+    const parsed = RRule.fromString(shift.recurrenceRule);
+  
+    // Copy the correct time‑of‑day from the real shift
+    const first = new Date(shift.startTime);   // or shift.shiftDate
+    const ancientStart = new Date(
+      Date.UTC(2020, 0, 1,                 // 2020‑01‑01
+               first.getUTCHours(),
+               first.getUTCMinutes(),
+               first.getUTCSeconds())
+    );
+  
+    parsed.options.dtstart = ancientStart;
+    return new RRule(parsed.options);          // rebuild so the change sticks
+  }
+
   useEffect(() => {
 
     const dayIndex = days.indexOf(selectedDay);
@@ -44,7 +60,7 @@ export function useShiftManagement(
       }
     
       try {
-        const rule = RRule.fromString(shift.recurrenceRule);
+        const rule = buildRuleForInfinitePast(shift);
     
         const startOfWeek = new Date(selectedDate);
         startOfWeek.setDate(selectedDate.getDate() - selectedDate.getDay()); // or your custom logic
