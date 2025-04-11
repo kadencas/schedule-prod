@@ -82,7 +82,7 @@ export default function Home() {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5, duration: 1 }}
       >
-        Public Library of Brookline
+        Better Library Scheduling
       </motion.p>
 
       <div className="mt-12 space-y-6 w-full max-w-4xl flex flex-col items-end z-10">

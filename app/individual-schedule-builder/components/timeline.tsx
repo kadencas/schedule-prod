@@ -18,6 +18,7 @@ interface TimelineProps {
   entities?: Entity[],
   selectedDay: string;
   user: string,
+  selectedDate: any,
 }
 
 export default function Timeline({
@@ -33,6 +34,7 @@ export default function Timeline({
   readOnly = false,
   selectedDay,
   user,
+  selectedDate,
   onShiftSave,
 }: TimelineProps) {
   const { containerRef, width: containerWidth } = useContainerWidth();
@@ -129,6 +131,7 @@ export default function Timeline({
             isRecurring={matchingShift.isRecurring}
             recurrenceRule={matchingShift.recurrenceRule}
             onHeightChange={handleShiftHeightChange}
+            selectedDate={selectedDate}
           />
         </div>
       )}

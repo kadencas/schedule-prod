@@ -4,7 +4,7 @@ import Draggable, { DraggableEvent, DraggableData } from "react-draggable";
 import { ResizableBox } from "react-resizable";
 import "react-resizable/css/styles.css";
 import SegmentBox from "./segmentBox";
-import { FaCheck, FaPlus, FaUser } from "react-icons/fa";
+import { FaCheck, FaPlus, FaRegSave, FaSave, FaUser } from "react-icons/fa";
 import { MdDragIndicator } from "react-icons/md";
 import { v4 as uuidv4 } from 'uuid';
 import { Entity, Segment, Shift } from "@/types/types";
@@ -30,6 +30,7 @@ interface ShiftBoxProps {
   onSaveShiftChanges?: (shiftId: string, updatedData: Partial<Shift>) => void;
   height?: number;
   onHeightChange?: (shiftId: string, newHeight: number) => void;
+  selectedDate: any,
 }
 
 interface ShiftUpdatePayload {
@@ -53,7 +54,7 @@ interface ShiftUpdatePayload {
 
 const SHIFT_HEIGHT = 100;
 const SEGMENT_HEIGHT = 70;
-const MINUTES_PER_PIXEL = 0.6; 
+const MINUTES_PER_PIXEL = 0.6;
 
 const ShiftBox: React.FC<ShiftBoxProps> = ({
   snapToGrid,
@@ -71,6 +72,7 @@ const ShiftBox: React.FC<ShiftBoxProps> = ({
   onSaveShiftChanges,
   height = SHIFT_HEIGHT,
   onHeightChange,
+  selectedDate,
 }) => {
   const nodeRef = useRef<HTMLDivElement>(null!);
   const [width, setWidth] = useState(initialWidth);
@@ -185,6 +187,65 @@ const ShiftBox: React.FC<ShiftBoxProps> = ({
     }
   };
 
+  function mergeDateAndTime(datePart: Date, timePart: Date): Date {
+    const merged = new Date(datePart);
+    merged.setHours(
+      timePart.getHours(),
+      timePart.getMinutes(),
+      timePart.getSeconds(),
+      timePart.getMilliseconds()
+    );
+    return merged;
+  }
+
+  const handleSaveAsIndividual = async () => {
+    if (!selectedDate) {
+      console.error("No selected date provided");
+      return;
+    }
+  
+    // Merge the date portion from selectedDate with the time portion from dynamicStartTime/dynamicEndTime.
+    const finalStartTime = mergeDateAndTime(new Date(selectedDate), dynamicStartTime);
+    const finalEndTime = mergeDateAndTime(new Date(selectedDate), dynamicEndTime);
+  
+    // Now build the payload using the merged times:
+    const payload = {
+      startTime: finalStartTime.toISOString(),
+      endTime: finalEndTime.toISOString(),
+      isRecurring: false,         
+      recurrenceRule: "",         
+      segments: localSegments.map(seg => ({
+        id: seg.id,
+        // Use finalStartTime as base when calculating each segment's start and end
+        startTime: new Date(finalStartTime.getTime() + seg.start * 60000).toISOString(),
+        endTime: new Date(finalStartTime.getTime() + seg.end * 60000).toISOString(),
+        segmentType: seg.label || " ",
+        location: seg.location || "default",
+        notes: "",
+        color: seg.color,
+        entities: seg.entity || null,
+        entityId: seg.entity?.id ?? null,
+      })),
+    };
+  
+    console.log("PAY LOAD:", payload);
+  
+    try {
+      const res = await fetch("/api/createIndividualShift", {   
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const createdShift = await res.json();
+      console.log("Created individual shift:", createdShift);
+      setHasChanges(false);
+      onSaveShiftChanges?.(createdShift.id, createdShift);
+    } catch (err) {
+      console.error("Error creating individual shift:", err);
+    }
+  };
+
   const handleSaveChanges = async () => {
     console.log("local segs to save", localSegments);
     const payload: ShiftUpdatePayload = {
@@ -240,7 +301,7 @@ const ShiftBox: React.FC<ShiftBoxProps> = ({
       position: "absolute",
       top: rect.bottom + window.scrollY,
       left: rect.left + window.scrollX,
-      zIndex: 9999, 
+      zIndex: 9999,
     };
   }
 
@@ -249,9 +310,9 @@ const ShiftBox: React.FC<ShiftBoxProps> = ({
 
     const sortedSegments = [...localSegments].sort((a, b) => a.start - b.start);
     const segmentPositions: Record<string, number> = {};
-    
+
     const rowEndPositions: number[] = [];
-    
+
     sortedSegments.forEach(segment => {
       let rowIndex = 0;
       while (rowIndex < rowEndPositions.length) {
@@ -264,7 +325,7 @@ const ShiftBox: React.FC<ShiftBoxProps> = ({
       rowEndPositions[rowIndex] = segment.end;
     });
     const rows = Math.max(1, rowEndPositions.length);
-    
+
     return { rows, segmentPositions };
   };
 
@@ -316,7 +377,7 @@ const ShiftBox: React.FC<ShiftBoxProps> = ({
                 <span className="text-white text-sm font-medium">
                   {formatTime(dynamicStartTime)} - {formatTime(dynamicEndTime)}
                 </span>
-                
+
                 <span ref={repeatIconRef} className="ml-2">
                   {localIsRecurring ? (
                     <button
@@ -341,31 +402,41 @@ const ShiftBox: React.FC<ShiftBoxProps> = ({
                     </button>
                   )}
                 </span>
-                
+
                 {!readOnly && (
                   <div className="absolute right-3 flex gap-1 items-center">
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleAddSegment();
-                      }}
-                      className="bg-blue-700 hover:bg-blue-800 text-white rounded-full p-1 transition-colors duration-200 focus:outline-none mr-1"
+                      onClick={(e) => { e.stopPropagation(); handleAddSegment(); }}
+                      className="bg-blue-700 hover:bg-blue-800 text-white rounded-full p-1"
                       title="Add segment"
                     >
                       <FaPlus size={10} />
                     </button>
+
                     {hasChanges && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleSaveChanges();
-                        }}
-                        className="flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-400 shadow-md transform hover:scale-105 font-medium text-xs"
-                        title="Save changes"
-                      >
-                        Save Changes <FaCheck size={10} />
-                      </button>
+                      <>
+                        {/* Save recurrence (existing behaviour) */}
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleSaveChanges(); }}
+                          className="flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded-md text-xs"
+                          title="Save changes to the whole series"
+                        >
+                          Save <FaSave size={16}/>
+                        </button>
+
+                        {/* NEW: overwrite only this occurrence */}
+                        {localIsRecurring && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleSaveAsIndividual(); }}
+                            className="flex items-center gap-1 bg-amber-600 hover:bg-amber-700 text-white px-2 py-1 rounded-md text-xs"
+                            title="Save only this occurrence (overwrite)"
+                          >
+                            Overwrite <FaSave size={16}/>
+                          </button>
+                        )}
+                      </>
                     )}
+
                     <MdDragIndicator className="text-white/60" size={16} />
                   </div>
                 )}

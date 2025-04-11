@@ -109,16 +109,11 @@ export default function Page() {
     }
   }, [fetchedUserShifts]);
 
-  useEffect(() => {
-    console.log("UserShifts changed:", userShifts);
-  }, [userShifts]);
-
   /**
    * takes shift ID for shift to update, and some updated data,
    * looks at userShifts array and updates the corresponding data
    */
   function handleShiftChangesSaved(shiftId: string, updatedData: Partial<Shift>) {
-    console.log("updated data", updatedData)
     setUserShifts((prevShifts) =>
       prevShifts.map((shift) =>
         shift.id === shiftId
@@ -126,7 +121,6 @@ export default function Page() {
           : shift
       )
     );
-    console.log("pre", userShifts)
   }
 
   /**
@@ -248,6 +242,7 @@ export default function Page() {
     shiftEndTime,
     initialX,
     initialWidth,
+    selectedDate,
     newSegmentLabel,
     setNewSegmentLabel,
     newSegmentStart,
@@ -361,6 +356,7 @@ export default function Page() {
                     entities={entities}
                     selectedDay={selectedDay}
                     user={session?.user?.name || "Anonymous User"}
+                    selectedDate={selectedDate}
                   />
                 </div>
                 

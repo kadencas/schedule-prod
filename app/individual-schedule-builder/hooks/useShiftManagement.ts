@@ -9,6 +9,7 @@ interface ShiftTimesState {
   shiftEndTime: Date | null;
   initialX: number;
   initialWidth: number;
+  selectedDate: Date | null;
 }
 
 export function useShiftManagement(
@@ -16,7 +17,6 @@ export function useShiftManagement(
   currentMonday: Date,
   selectedDay: string
 ) {
-
   const [shiftSegments, setShiftSegments] = useState<Segment[]>([]);
   const [newSegmentLabel, setNewSegmentLabel] = useState("");
   const [newSegmentStart, setNewSegmentStart] = useState(30);
@@ -28,49 +28,45 @@ export function useShiftManagement(
     shiftEndTime: null,
     initialX: 0,
     initialWidth: 100,
+    selectedDate: null,
   });
 
   function buildRuleForInfinitePast(shift: Shift) {
     const parsed = RRule.fromString(shift.recurrenceRule);
-  
-    // Copy the correct time‑of‑day from the real shift
-    const first = new Date(shift.startTime);   // or shift.shiftDate
+    // Copy the correct time‑of‑day from the original shift
+    const first = new Date(shift.startTime);
     const ancientStart = new Date(
-      Date.UTC(2020, 0, 1,                 // 2020‑01‑01
-               first.getUTCHours(),
-               first.getUTCMinutes(),
-               first.getUTCSeconds())
+      Date.UTC(2020, 0, 1, 
+        first.getUTCHours(),
+        first.getUTCMinutes(),
+        first.getUTCSeconds())
     );
-  
     parsed.options.dtstart = ancientStart;
-    return new RRule(parsed.options);          // rebuild so the change sticks
+    return new RRule(parsed.options);
   }
 
   useEffect(() => {
-
+    // Compute the selected date from currentMonday and selectedDay
     const dayIndex = days.indexOf(selectedDay);
     const selectedDate = new Date(currentMonday);
     selectedDate.setDate(currentMonday.getDate() + dayIndex);
 
-
-    function doesShiftOccurOn(shift: Shift, selectedDate: Date) {
+    function doesShiftOccurOn(shift: Shift, date: Date) {
       if (!shift.isRecurring || !shift.recurrenceRule) {
         const shiftDate = new Date(shift.shiftDate);
-        return shiftDate.toDateString() === selectedDate.toDateString();
+        return shiftDate.toDateString() === date.toDateString();
       }
     
       try {
         const rule = buildRuleForInfinitePast(shift);
-    
-        const startOfWeek = new Date(selectedDate);
-        startOfWeek.setDate(selectedDate.getDate() - selectedDate.getDay()); // or your custom logic
+        // Determine week boundaries (or use another appropriate range)
+        const startOfWeek = new Date(date);
+        startOfWeek.setDate(date.getDate() - date.getDay());
         const endOfWeek = new Date(startOfWeek);
         endOfWeek.setDate(startOfWeek.getDate() + 7);
-    
         const occurrences = rule.between(startOfWeek, endOfWeek, true);
-    
         return occurrences.some(
-          (occurrence) => occurrence.toDateString() === selectedDate.toDateString()
+          (occurrence) => occurrence.toDateString() === date.toDateString()
         );
       } catch (err) {
         console.error("Invalid Recurrence Rule:", shift.recurrenceRule, err);
@@ -78,11 +74,15 @@ export function useShiftManagement(
       }
     }
 
-
-    const matchingShift = userShifts.find((shift: Shift) =>
+    // Get all shifts that occur on the selected date:
+    const shiftsForDay = userShifts.filter((shift: Shift) => 
       doesShiftOccurOn(shift, selectedDate)
     );
-    console.log("matching:", matchingShift)
+    
+    // Favor an individual (non-recurring) shift if one exists
+    const individualShift = shiftsForDay.find((shift: Shift) => !shift.isRecurring);
+    const matchingShift = individualShift || shiftsForDay[0];
+    console.log("matchingShift:", matchingShift);
 
     if (matchingShift) {
       const shiftStart = new Date(matchingShift.startTime);
@@ -106,7 +106,6 @@ export function useShiftManagement(
           entity: seg.entities,
         };
       });
-
       setShiftSegments(mappedSegments);
     } else {
       setShiftSegments([]);
@@ -124,20 +123,14 @@ export function useShiftManagement(
       const baseline = new Date(shiftStart);
       baseline.setHours(9, 0, 0, 0);
 
-      const diffStartMinutes =
-        (shiftStart.getTime() - baseline.getTime()) / 60000;
+      const diffStartMinutes = (shiftStart.getTime() - baseline.getTime()) / 60000;
       initialX = diffStartMinutes / 0.6;
 
-      const diffShiftMinutes =
-        (shiftEnd.getTime() - shiftStart.getTime()) / 60000;
+      const diffShiftMinutes = (shiftEnd.getTime() - shiftStart.getTime()) / 60000;
       initialWidth = diffShiftMinutes / 0.6;
 
-      shiftStartTime = new Date(
-        baseline.getTime() + initialX * 0.6 * 60000
-      );
-      shiftEndTime = new Date(
-        baseline.getTime() + (initialX + initialWidth) * 0.6 * 60000
-      );
+      shiftStartTime = new Date(baseline.getTime() + initialX * 0.6 * 60000);
+      shiftEndTime = new Date(baseline.getTime() + (initialX + initialWidth) * 0.6 * 60000);
     }
 
     setShiftTimes({
@@ -146,6 +139,7 @@ export function useShiftManagement(
       shiftEndTime,
       initialX,
       initialWidth,
+      selectedDate,
     });
   }, [userShifts, currentMonday, selectedDay]);
 
@@ -161,7 +155,7 @@ export function useShiftManagement(
       start,
       end,
       color,
-      location,
+      location: "", // provide a default or a proper value if needed
     };
     setShiftSegments((prev) => [...prev, newSegment]);
   };
@@ -175,12 +169,7 @@ export function useShiftManagement(
       alert("Start time must be less than end time.");
       return;
     }
-    handleAddSegment(
-      newSegmentLabel,
-      newSegmentStart,
-      newSegmentEnd,
-      newSegmentColor
-    );
+    handleAddSegment(newSegmentLabel, newSegmentStart, newSegmentEnd, newSegmentColor);
     setNewSegmentLabel("");
     setNewSegmentStart(30);
     setNewSegmentEnd(60);
@@ -205,5 +194,7 @@ export function useShiftManagement(
     shiftEndTime: shiftTimes.shiftEndTime,
     initialX: shiftTimes.initialX,
     initialWidth: shiftTimes.initialWidth,
+    selectedDate: shiftTimes.selectedDate, // return the computed selected date
   };
 }
+
