@@ -427,7 +427,7 @@ const SegmentBox: React.FC<SegmentBoxProps> = ({
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center overflow-hidden">
-                {EntityIcon && (
+                {EntityIcon ? (
                   <div className="flex items-center bg-white/80 px-1.5 py-0.5 rounded-md shadow-sm">
                     <EntityIcon size={13} className="text-gray-700 flex-shrink-0" />
                     {canShowEntityName() && (
@@ -436,7 +436,13 @@ const SegmentBox: React.FC<SegmentBoxProps> = ({
                       </span>
                     )}
                   </div>
-                )}
+                ) : localLabel && localLabel.trim() !== "" ? (
+                  <div className="flex items-center bg-white/80 px-1.5 py-0.5 rounded-md shadow-sm">
+                    <span className="text-xs font-medium text-gray-700 truncate max-w-[90px]">
+                      {localLabel}
+                    </span>
+                  </div>
+                ) : null}
               </div>
               {!readOnly && (
                 <div className="flex-shrink-0 flex">

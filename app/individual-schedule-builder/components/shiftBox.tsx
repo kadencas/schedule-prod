@@ -418,20 +418,26 @@ const ShiftBox: React.FC<ShiftBoxProps> = ({
                         {/* Save recurrence (existing behaviour) */}
                         <button
                           onClick={(e) => { e.stopPropagation(); handleSaveChanges(); }}
-                          className="flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded-md text-xs"
+                          className="flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded-md text-xs relative group transition-all duration-200 hover:shadow-md"
                           title="Save changes to the whole series"
                         >
-                          Save <FaSave size={16}/>
+                          Save <FaSave size={14} className="transition-transform group-hover:scale-110" />
+                          <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800/95 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-all duration-200 whitespace-nowrap shadow-lg">
+                            Save changes to the whole series
+                          </span>
                         </button>
 
                         {/* NEW: overwrite only this occurrence */}
                         {localIsRecurring && (
                           <button
                             onClick={(e) => { e.stopPropagation(); handleSaveAsIndividual(); }}
-                            className="flex items-center gap-1 bg-amber-600 hover:bg-amber-700 text-white px-2 py-1 rounded-md text-xs"
+                            className="flex items-center gap-1.5 bg-amber-600 hover:bg-amber-700 text-white px-2 py-1 rounded-md text-xs relative group transition-all duration-200 hover:shadow-md"
                             title="Save only this occurrence (overwrite)"
                           >
-                            Overwrite <FaSave size={16}/>
+                            Overwrite <FaSave size={14} className="transition-transform group-hover:scale-110" />
+                            <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800/95 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-all duration-200 whitespace-nowrap shadow-lg">
+                              Save only this occurrence (overwrite)
+                            </span>
                           </button>
                         )}
                       </>
