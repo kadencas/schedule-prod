@@ -146,7 +146,12 @@ export function useEntityShiftManagement(
     });
 
     /* ---- merge segments into one combined shift ---- */
-    const combinedShift = { ...primaryEntityShift, segments: collectAllSegments };
+    const combinedShift = {
+      ...primaryEntityShift,
+      segments: collectAllSegments.length
+        ? collectAllSegments                        // if user segments exist
+        : primaryEntityShift.segments ?? [],        // otherwise fall back to entity segments
+    };
 
     /* ---- map segments for the UI ---- */
     const shiftStart = new Date(combinedShift.startTime);
