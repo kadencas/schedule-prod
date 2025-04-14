@@ -5,7 +5,7 @@ generator client {
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  //directUrl = env("DIRECT_URL")
 }
 
 model companies {
@@ -84,6 +84,7 @@ model work_shifts {
   isRecurring       Boolean   @default(false)
   recurrenceRule    String?   // e.g., "FREQ=WEEKLY;BYDAY=MO,WE,FR"
   recurrenceEndDate DateTime? // Optional: when the recurrence stops
+  overridesShiftId  String?
   notes             String?
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @default(now()) @updatedAt

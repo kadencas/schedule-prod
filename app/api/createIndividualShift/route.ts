@@ -15,7 +15,7 @@
       const userId = session.user.id;
 
       const body = await request.json();
-      const { startTime, endTime, segments = [] } = body;
+      const { startTime, endTime, segments = [], overridesShiftId } = body;
 
       if (!startTime || !endTime) {
         return NextResponse.json(
@@ -33,6 +33,7 @@
           shiftDate: new Date(startTime),
           startTime: new Date(startTime),
           endTime: new Date(endTime),
+          overridesShiftId: overridesShiftId,
           segments: {
             create: segments.map((s: any) => ({
               startTime: new Date(s.startTime),

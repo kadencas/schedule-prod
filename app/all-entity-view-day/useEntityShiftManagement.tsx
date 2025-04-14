@@ -11,39 +11,24 @@ interface ShiftTimesState {
   initialWidth: number;
 }
 
-/* ---------- helpers ---------- */
-
 function buildRuleForInfinitePast(shift: Shift): RRule {
   const parsed = RRule.fromString(shift.recurrenceRule!);
+
+  // Preserve the real time‑of‑day of the shift
   const first = new Date(shift.startTime);
   const ancient = new Date(
     Date.UTC(
-      2020, 0, 1,
+      2020,
+      0,
+      1, // 2020‑01‑01
       first.getUTCHours(),
       first.getUTCMinutes(),
       first.getUTCSeconds()
     )
   );
-  parsed.options.dtstart = ancient;
-  return new RRule(parsed.options);
-}
 
-function doesShiftOccurOn(shift: Shift, date: Date): boolean {
-  if (!shift.isRecurring || !shift.recurrenceRule) {
-    return new Date(shift.shiftDate).toDateString() === date.toDateString();
-  }
-  try {
-    const rule = buildRuleForInfinitePast(shift);
-    const rangeStart = new Date(date);
-    rangeStart.setHours(0, 0, 0, 0);
-    const rangeEnd = new Date(date);
-    rangeEnd.setHours(23, 59, 59, 999);
-    return rule.between(rangeStart, rangeEnd, true).some(
-      occ => occ.toDateString() === date.toDateString()
-    );
-  } catch {
-    return false;
-  }
+  parsed.options.dtstart = ancient;
+  return new RRule(parsed.options); // rebuild so change sticks
 }
 
 export function useEntityShiftManagement(
@@ -62,32 +47,226 @@ export function useEntityShiftManagement(
   });
 
   useEffect(() => {
-    /* ---------- 1.  figure out selected date ---------- */
     const dayIndex = days.indexOf(selectedDay);
     const selectedDate = new Date(currentMonday);
     selectedDate.setDate(currentMonday.getDate() + dayIndex);
 
-    /* ---------- 2.  find all shifts that occur today ---------- */
-    const matchingUserShifts = userShifts.filter(s =>
-      doesShiftOccurOn(s, selectedDate)
+    function doesShiftOccurOn(shift: Shift, date: Date): boolean {
+      if (!shift.isRecurring || !shift.recurrenceRule) {
+        const shiftDate = new Date(shift.shiftDate);
+        const matches = shiftDate.toDateString() === date.toDateString();
+        console.log(
+          `  NON-RECURRING SHIFT ${shift.id} on ${shiftDate.toDateString()} matches ${date.toDateString()}? ${matches}`
+        );
+        return matches;
+      }
+
+      try {
+        const rule = buildRuleForInfinitePast(shift);
+        const rangeStart = new Date(date);
+        rangeStart.setDate(date.getDate() - 1);
+        rangeStart.setHours(0, 0, 0, 0);
+        const rangeEnd = new Date(date);
+        rangeEnd.setDate(date.getDate() + 1);
+        rangeEnd.setHours(23, 59, 59, 999);
+        const occurrences = rule.between(rangeStart, rangeEnd, true);
+        const matches = occurrences.some((occurrence) => 
+          occurrence.toDateString() === date.toDateString()
+        );
+        return matches;
+      } catch (err) {
+        return false;
+      }
+    }
+
+    // Get all user shifts that occur on the selected date
+    const matchingUserShifts = userShifts.filter((shift) =>
+      doesShiftOccurOn(shift, selectedDate)
     );
 
-    const matchingEntityShifts = entityShifts
-      .filter(s => doesShiftOccurOn(s, selectedDate))
-      // sort so individual (non‑recurring) shifts come first
-      .sort((a, b) => {
-        if (a.isRecurring === b.isRecurring) return 0;
-        return a.isRecurring ? 1 : -1;
+    // Filter out user shifts that have been overridden.
+    // Gather all overridden shift IDs from shifts that are explicitly overriding another.
+    const overriddenUserShiftIds = new Set(
+      matchingUserShifts
+        .filter((shift) => shift.overridesShiftId != null)
+        .map((shift) => shift.overridesShiftId)
+    );
+    // Remove shifts from matchingUserShifts that are being overridden.
+    const filteredUserShifts = matchingUserShifts.filter(
+      (shift) => !overriddenUserShiftIds.has(shift.id)
+    );
+
+    const matchingEntityShifts = entityShifts.filter((shift) =>
+      doesShiftOccurOn(shift, selectedDate)
+    );
+
+    if (matchingEntityShifts.length > 0) {
+      const primaryEntityShift = matchingEntityShifts[0];
+      const entityId = primaryEntityShift.entityId;
+      const entityIdStr = String(entityId);
+      const entityIdNum = Number(entityId);
+
+      function deepSearchForEntityId(obj: any): string | null {
+        if (!obj) return null;
+        if (obj.id) return obj.id;
+        if (obj.entityId) return obj.entityId;
+        if (obj.entity && obj.entity.id) return obj.entity.id;
+        if (obj.entities && obj.entities.id) return obj.entities.id;
+
+        for (const key in obj) {
+          if (typeof obj[key] === "object" && obj[key] !== null) {
+            const result = deepSearchForEntityId(obj[key]);
+            if (result) return result;
+          }
+        }
+
+        return null;
+      }
+
+      function matchesEntityId(value: any): boolean {
+        if (!value) return false;
+        if (value === entityId) return true;
+        const valueStr = String(value).trim();
+        if (valueStr === entityIdStr) return true;
+        const valueNum = Number(value);
+        if (!isNaN(valueNum) && valueNum === entityIdNum) return true;
+        return false;
+      }
+
+      const collectAllSegments: any[] = [];
+
+      // Use the filtered user shifts (without overridden shifts) to collect segments.
+      filteredUserShifts.forEach((userShift) => {
+        const userName = (userShift as any).userName || "Unknown User";
+        if (!userShift.segments || userShift.segments.length === 0) {
+          return;
+        }
+
+        userShift.segments.forEach((segment) => {
+          const entityProperties = {
+            directEntityId: segment.entityId,
+            entityIdFromEntity: segment.entity?.id,
+            entityIdFromEntities: segment.entities?.id,
+            deepSearchResult: deepSearchForEntityId(segment),
+          };
+
+          if (matchesEntityId(segment.entityId)) {
+            collectAllSegments.push({
+              ...segment,
+              user: userName,
+            });
+          } else if (segment.entity && matchesEntityId(segment.entity.id)) {
+            collectAllSegments.push({
+              ...segment,
+              user: userName,
+            });
+          } else if (segment.entities && matchesEntityId(segment.entities.id)) {
+            collectAllSegments.push({
+              ...segment,
+              user: userName,
+            });
+          } else {
+            const deepResult = deepSearchForEntityId(segment);
+            if (deepResult && matchesEntityId(deepResult)) {
+              collectAllSegments.push({
+                ...segment,
+                user: userName,
+              });
+            }
+          }
+        });
       });
 
-    /* ---------- 3.  if an individual shift exists, drop recurring ---------- */
-    const hasIndividualUserShift = matchingUserShifts.some(s => !s.isRecurring);
-    const filteredUserShifts = hasIndividualUserShift
-      ? matchingUserShifts.filter(s => !s.isRecurring)
-      : matchingUserShifts;
+      const combinedShift = {
+        ...primaryEntityShift,
+        segments: collectAllSegments,
+      };
 
-    /* ---------- 4.  build UI data ---------- */
-    if (matchingEntityShifts.length === 0) {
+      if (combinedShift.segments.length > 0) {
+        const shiftStart = new Date(combinedShift.startTime);
+        const mappedSegments = combinedShift.segments.map((seg: any) => {
+          const segStart = new Date(seg.startTime);
+          const segEnd = new Date(seg.endTime);
+          const normalizedSegStart = new Date(segStart);
+          const normalizedSegEnd = new Date(segEnd);
+          const normalizedShiftStart = new Date(shiftStart);
+          normalizedSegStart.setFullYear(2000, 0, 1);
+          normalizedSegEnd.setFullYear(2000, 0, 1);
+          normalizedShiftStart.setFullYear(2000, 0, 1);
+
+          const startMinutes = Math.round(
+            (normalizedSegStart.getTime() - normalizedShiftStart.getTime()) / 60000
+          );
+          const endMinutes = Math.round(
+            (normalizedSegEnd.getTime() - normalizedShiftStart.getTime()) / 60000
+          );
+
+          return {
+            id: seg.id,
+            label: seg.segmentType,
+            start: startMinutes,
+            end: endMinutes,
+            color: seg.color,
+            location: seg.location,
+            entity: seg.entities || seg.entity,
+            user: seg.user,
+          } as Segment;
+        });
+
+        setShiftSegments(mappedSegments);
+
+        const shiftEnd = new Date(combinedShift.endTime);
+        const baseline = new Date(shiftStart);
+        baseline.setHours(9, 0, 0, 0);
+        const diffStartMinutes =
+          (shiftStart.getTime() - baseline.getTime()) / 60000;
+        const initialX = diffStartMinutes / 0.6;
+        const diffShiftMinutes =
+          (shiftEnd.getTime() - shiftStart.getTime()) / 60000;
+        const initialWidth = diffShiftMinutes / 0.6;
+        const computedShiftStartTime = new Date(
+          baseline.getTime() + initialX * 0.6 * 60000
+        );
+        const computedShiftEndTime = new Date(
+          baseline.getTime() + (initialX + initialWidth) * 0.6 * 60000
+        );
+
+        setShiftTimes({
+          matchingShift: combinedShift,
+          shiftStartTime: computedShiftStartTime,
+          shiftEndTime: computedShiftEndTime,
+          initialX,
+          initialWidth,
+        });
+      } else {
+        const shiftStart = new Date(primaryEntityShift.startTime);
+        const shiftEnd = new Date(primaryEntityShift.endTime);
+        const baseline = new Date(shiftStart);
+        baseline.setHours(9, 0, 0, 0);
+        const diffStartMinutes =
+          (shiftStart.getTime() - baseline.getTime()) / 60000;
+        const initialX = diffStartMinutes / 0.6;
+        const diffShiftMinutes =
+          (shiftEnd.getTime() - shiftStart.getTime()) / 60000;
+        const initialWidth = diffShiftMinutes / 0.6;
+        const computedShiftStartTime = new Date(
+          baseline.getTime() + initialX * 0.6 * 60000
+        );
+        const computedShiftEndTime = new Date(
+          baseline.getTime() + (initialX + initialWidth) * 0.6 * 60000
+        );
+
+        setShiftTimes({
+          matchingShift: { ...primaryEntityShift, segments: [] },
+          shiftStartTime: computedShiftStartTime,
+          shiftEndTime: computedShiftEndTime,
+          initialX,
+          initialWidth,
+        });
+
+        setShiftSegments([]);
+      }
+    } else {
       setShiftSegments([]);
       setShiftTimes({
         matchingShift: null,
@@ -96,106 +275,9 @@ export function useEntityShiftManagement(
         initialX: 0,
         initialWidth: 100,
       });
-      return;
     }
-
-    const primaryEntityShift = matchingEntityShifts[0]; // already favours individual
-    const entityId = primaryEntityShift.entityId;
-
-    /* ---- utilities for segment/entity matching ---- */
-    const entityIdStr = String(entityId);
-    const entityIdNum = Number(entityId);
-
-    function matchesEntityId(value: any): boolean {
-      if (!value) return false;
-      if (value === entityId) return true;
-      if (String(value).trim() === entityIdStr) return true;
-      const num = Number(value);
-      return !isNaN(num) && num === entityIdNum;
-    }
-
-    function deepSearchForEntityId(obj: any): string | null {
-      if (!obj || typeof obj !== "object") return null;
-      if (obj.id && matchesEntityId(obj.id)) return obj.id;
-      if (obj.entityId && matchesEntityId(obj.entityId)) return obj.entityId;
-      if (obj.entity?.id && matchesEntityId(obj.entity.id)) return obj.entity.id;
-      if (obj.entities?.id && matchesEntityId(obj.entities.id)) return obj.entities.id;
-      for (const key in obj) {
-        const res = deepSearchForEntityId(obj[key]);
-        if (res) return res;
-      }
-      return null;
-    }
-
-    /* ---- collect all user segments that match this entity ---- */
-    const collectAllSegments: any[] = [];
-
-    filteredUserShifts.forEach(userShift => {
-      const userName = (userShift as any).userName ?? "Unknown User";
-      userShift.segments?.forEach(segment => {
-        const matches =
-          matchesEntityId(segment.entityId) ||
-          (segment.entity && matchesEntityId(segment.entity.id)) ||
-          (segment.entities && matchesEntityId(segment.entities.id)) ||
-          (!!deepSearchForEntityId(segment));
-
-        if (matches) {
-          collectAllSegments.push({ ...segment, user: userName });
-        }
-      });
-    });
-
-    /* ---- merge segments into one combined shift ---- */
-    const combinedShift = { ...primaryEntityShift, segments: collectAllSegments };
-
-    /* ---- map segments for the UI ---- */
-    const shiftStart = new Date(combinedShift.startTime);
-    const mappedSegments = combinedShift.segments.map((seg: any) => {
-      const segStart = new Date(seg.startTime);
-      const segEnd = new Date(seg.endTime);
-
-      const normShiftStart = new Date(2000, 0, 1, shiftStart.getHours(), shiftStart.getMinutes());
-      const normSegStart = new Date(2000, 0, 1, segStart.getHours(), segStart.getMinutes());
-      const normSegEnd = new Date(2000, 0, 1, segEnd.getHours(), segEnd.getMinutes());
-
-      const startMinutes = (normSegStart.getTime() - normShiftStart.getTime()) / 60000;
-      const endMinutes = (normSegEnd.getTime() - normShiftStart.getTime()) / 60000;
-
-      return {
-        id: seg.id,
-        label: seg.segmentType,
-        start: Math.round(startMinutes),
-        end: Math.round(endMinutes),
-        color: seg.color,
-        location: seg.location,
-        entity: seg.entities || seg.entity,
-        user: seg.user,
-      } as Segment;
-    });
-
-    setShiftSegments(mappedSegments);
-
-    /* ---- compute timeline offsets ---- */
-    const shiftEnd = new Date(combinedShift.endTime);
-    const baseline = new Date(shiftStart);
-    baseline.setHours(9, 0, 0, 0);
-
-    const diffStartMinutes = (shiftStart.getTime() - baseline.getTime()) / 60000;
-    const initialX = diffStartMinutes / 0.6;
-
-    const diffShiftMinutes = (shiftEnd.getTime() - shiftStart.getTime()) / 60000;
-    const initialWidth = diffShiftMinutes / 0.6;
-
-    setShiftTimes({
-      matchingShift: combinedShift,
-      shiftStartTime: new Date(baseline.getTime() + initialX * 0.6 * 60000),
-      shiftEndTime: new Date(baseline.getTime() + (initialX + initialWidth) * 0.6 * 60000),
-      initialX,
-      initialWidth,
-    });
   }, [userShifts, entityShifts, currentMonday, selectedDay]);
 
-  /* ---------- public API ---------- */
   return {
     shiftSegments,
     matchingShift: shiftTimes.matchingShift,
@@ -205,4 +287,3 @@ export function useEntityShiftManagement(
     initialWidth: shiftTimes.initialWidth,
   };
 }
-

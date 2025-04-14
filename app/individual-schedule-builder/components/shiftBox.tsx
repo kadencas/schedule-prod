@@ -213,7 +213,8 @@ const ShiftBox: React.FC<ShiftBoxProps> = ({
       startTime: finalStartTime.toISOString(),
       endTime: finalEndTime.toISOString(),
       isRecurring: false,         
-      recurrenceRule: "",         
+      recurrenceRule: "",
+      overridesShiftId: shiftId,
       segments: localSegments.map(seg => ({
         id: seg.id,
         // Use finalStartTime as base when calculating each segment's start and end

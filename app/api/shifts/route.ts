@@ -40,6 +40,7 @@ export async function GET(request: Request) {
         id: shift.id,
         isRecurring: shift.isRecurring,
         recurrenceRule: shift.recurrenceRule,
+        overridesShiftId: shift.overridesShiftId,
         shiftDate: shift.shiftDate ? shift.shiftDate.toISOString() : null, 
         startTime: shift.startTime.toISOString(),
         endTime: shift.endTime.toISOString(),
