@@ -58,7 +58,15 @@ export default function Home() {
         className="absolute top-6 right-6 flex gap-4 z-10"
         variants={headerItemVariants}
       >
-        
+        <Link href="/about">
+          <motion.button
+            className="px-4 py-2 bg-gray-500 text-white rounded-full shadow-md hover:bg-gray-600 transition"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            About
+          </motion.button>
+        </Link>
         <Link href="/account-management/signin">
           <motion.button
             className="px-4 py-2 bg-blue-500 text-white rounded-full shadow-md hover:bg-blue-600 transition"
