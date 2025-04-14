@@ -225,14 +225,6 @@ export default function MyScheduleTab({ employeeData, userName, localizer }: MyS
               {format(today, "EEEE, MMMM d, yyyy")}
             </p>
           </div>
-
-          <div className="mt-4 md:mt-0 flex items-center bg-white/10 rounded-lg px-4 py-2 backdrop-blur-sm">
-            <FiClock className="mr-2 text-white/80" />
-            <div>
-              <p className="text-sm font-medium">This Week's Hours</p>
-              <p className="text-lg font-bold">{thisWeekHours.toFixed(1)}h</p>
-            </div>
-          </div>
         </div>
       </motion.div>
 
