@@ -23,7 +23,10 @@ export default function About() {
   ];
 
   useEffect(() => {
-    videoRefs.forEach(ref => {
+    if (videoRefs[0].current) {
+      videoRefs[0].current.playbackRate = 1.3;
+    }
+    videoRefs.slice(1).forEach(ref => {
       if (ref.current) {
         ref.current.playbackRate = 1.5;
       }

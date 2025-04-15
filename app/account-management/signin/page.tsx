@@ -88,6 +88,11 @@ export default function SignInPage() {
             whileFocus={{ scale: 1.02 }}
             transition={{ duration: 0.3 }}
           />
+          <div className="text-right">
+            <Link href="/account-management/forgot-password" className="text-blue-600 hover:underline text-sm">
+              Forgot password?
+            </Link>
+          </div>
           <motion.button
             type="submit"
             className="bg-blue-600 text-white py-2 rounded-full hover:bg-blue-700 transition-colors"
@@ -97,21 +102,6 @@ export default function SignInPage() {
             Sign In
           </motion.button>
         </form>
-        <p className="mt-6 text-center">
-          Don't have an account?
-        </p>
-
-        <p className="mt-6 text-center">
-          <Link href="/signup" className="text-green-600 hover:underline">
-            Start an orginization
-          </Link>
-          </p>
-
-          <p className="mt-6 text-center">
-          <Link href="/signup" className="text-blue-600 hover:underline">
-            Join an existing orginization
-          </Link>
-          </p>
       </motion.div>
     </div>
   );
