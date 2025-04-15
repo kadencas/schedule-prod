@@ -2,6 +2,7 @@
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { PT_Serif, Inter } from 'next/font/google';
+import { useRef, useEffect } from 'react';
 
 const ptSerif = PT_Serif({
   subsets: ['latin'],
@@ -14,6 +15,21 @@ const inter = Inter({
 });
 
 export default function About() {
+  const videoRefs = [
+    useRef<HTMLVideoElement>(null),
+    useRef<HTMLVideoElement>(null),
+    useRef<HTMLVideoElement>(null),
+    useRef<HTMLVideoElement>(null)
+  ];
+
+  useEffect(() => {
+    videoRefs.forEach(ref => {
+      if (ref.current) {
+        ref.current.playbackRate = 1.5;
+      }
+    });
+  }, []);
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -94,6 +110,7 @@ Scroll to see how our intuitive two-layer tagging system makes scheduling effort
             variants={itemVariants}
           >
             <video
+              ref={videoRefs[0]}
               autoPlay
               muted
               loop
@@ -123,7 +140,22 @@ Scroll to see how our intuitive two-layer tagging system makes scheduling effort
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
           >
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <motion.svg 
+              width="40" 
+              height="40" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              xmlns="http://www.w3.org/2000/svg"
+              animate={{ 
+                scale: [1, 1.1, 1],
+                opacity: [0.8, 1, 0.8]
+              }}
+              transition={{ 
+                duration: 1.5,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            >
               <motion.path
                 d="M12 4L12 20M12 20L6 14M12 20L18 14"
                 stroke="#3B82F6"
@@ -134,7 +166,7 @@ Scroll to see how our intuitive two-layer tagging system makes scheduling effort
                 animate={{ pathLength: 1 }}
                 transition={{ duration: 1, ease: "easeInOut" }}
               />
-            </svg>
+            </motion.svg>
           </motion.div>
 
           {/* Shift Creation */}
@@ -143,6 +175,7 @@ Scroll to see how our intuitive two-layer tagging system makes scheduling effort
             variants={itemVariants}
           >
             <video
+              ref={videoRefs[1]}
               autoPlay
               muted
               loop
@@ -172,7 +205,22 @@ Scroll to see how our intuitive two-layer tagging system makes scheduling effort
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
           >
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <motion.svg 
+              width="40" 
+              height="40" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              xmlns="http://www.w3.org/2000/svg"
+              animate={{ 
+                scale: [1, 1.1, 1],
+                opacity: [0.8, 1, 0.8]
+              }}
+              transition={{ 
+                duration: 1.5,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            >
               <motion.path
                 d="M12 4L12 20M12 20L6 14M12 20L18 14"
                 stroke="#3B82F6"
@@ -183,7 +231,7 @@ Scroll to see how our intuitive two-layer tagging system makes scheduling effort
                 animate={{ pathLength: 1 }}
                 transition={{ duration: 1, ease: "easeInOut" }}
               />
-            </svg>
+            </motion.svg>
           </motion.div>
 
           {/* Team View */}
@@ -192,6 +240,7 @@ Scroll to see how our intuitive two-layer tagging system makes scheduling effort
             variants={itemVariants}
           >
             <video
+              ref={videoRefs[2]}
               autoPlay
               muted
               loop
@@ -221,7 +270,22 @@ Scroll to see how our intuitive two-layer tagging system makes scheduling effort
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
           >
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <motion.svg 
+              width="40" 
+              height="40" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              xmlns="http://www.w3.org/2000/svg"
+              animate={{ 
+                scale: [1, 1.1, 1],
+                opacity: [0.8, 1, 0.8]
+              }}
+              transition={{ 
+                duration: 1.5,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            >
               <motion.path
                 d="M12 4L12 20M12 20L6 14M12 20L18 14"
                 stroke="#3B82F6"
@@ -232,7 +296,7 @@ Scroll to see how our intuitive two-layer tagging system makes scheduling effort
                 animate={{ pathLength: 1 }}
                 transition={{ duration: 1, ease: "easeInOut" }}
               />
-            </svg>
+            </motion.svg>
           </motion.div>
 
           {/* Tag View */}
@@ -241,6 +305,7 @@ Scroll to see how our intuitive two-layer tagging system makes scheduling effort
             variants={itemVariants}
           >
             <video
+              ref={videoRefs[3]}
               autoPlay
               muted
               loop
@@ -263,6 +328,64 @@ Scroll to see how our intuitive two-layer tagging system makes scheduling effort
             </div>
           </motion.div>
         </div>
+
+        {/* Final Arrow and CTA */}
+        <motion.div 
+          className="flex flex-col items-center justify-center mt-16 mb-16"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+        >
+          <motion.svg 
+            width="60" 
+            height="60" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            xmlns="http://www.w3.org/2000/svg"
+            animate={{ 
+              scale: [1, 1.2, 1],
+              opacity: [0.8, 1, 0.8]
+            }}
+            transition={{ 
+              duration: 1.5,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          >
+            <motion.path
+              d="M12 4L12 20M12 20L6 14M12 20L18 14"
+              stroke="#3B82F6"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              initial={{ pathLength: 0 }}
+              animate={{ pathLength: 1 }}
+              transition={{ duration: 1, ease: "easeInOut" }}
+            />
+          </motion.svg>
+
+          <motion.p 
+            className={`${inter.className} text-xl text-gray-700 text-center max-w-2xl mx-auto mt-8 mb-4`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.7 }}
+          >
+            Get started for free today. It only takes minutes to register your team and start building schedules.
+          </motion.p>
+
+          <Link href="/signup">
+            <motion.button
+              className="mt-4 px-8 py-4 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-all duration-300 flex items-center gap-2 text-xl font-semibold"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              Get Started Now
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </motion.button>
+          </Link>
+        </motion.div>
       </motion.div>
     </motion.div>
   );
