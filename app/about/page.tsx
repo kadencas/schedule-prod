@@ -93,14 +93,15 @@ export default function About() {
           className={`${ptSerif.className} text-7xl font-extrabold text-blue-600 mb-6 text-center leading-tight`}
           variants={itemVariants}
         >
-          Library Scheduling Made Simple
+          Easy Library Scheduling
         </motion.h1>
 
         <motion.p 
           className={`${inter.className} text-2xl text-gray-700 mb-12 text-center max-w-3xl mx-auto leading-relaxed`}
           variants={itemVariants}
         >
-Scroll to see how our intuitive two-layer tagging system makes scheduling effortless. Quickly organize, manage, and visualize your team's shifts—saving you time and streamlining your workflow.        </motion.p>
+          Scroll to learn how our <strong>drag-and-drop interface</strong> and <strong>two-layer tagging system</strong> make library scheduling easy.
+        </motion.p>
 
         {/* Feature Sections */}
         <div className="space-y-16">
@@ -127,7 +128,7 @@ Scroll to see how our intuitive two-layer tagging system makes scheduling effort
                   Define Tags
                 </h2>
                 <p className={`${inter.className} text-xl text-white/95 max-w-2xl`}>
-                  Create stations and tasks with custom, colors, and icons and coverage rules.
+                  <strong>Tags</strong> are library entities such as <strong>stations</strong> or <strong>tasks</strong> that require coverage. Assign tags custom colors, icons, and coverage rules.
                 </p>
               </div>
             </div>
@@ -189,10 +190,10 @@ Scroll to see how our intuitive two-layer tagging system makes scheduling effort
             <div className="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-black/90 via-black/70 to-transparent h-[40%]">
               <div className="absolute bottom-0 left-0 right-0 p-8">
                 <h2 className={`${ptSerif.className} text-4xl font-bold text-white mb-4`}>
-                  Create Shifts
+                  Create & Edit Shifts
                 </h2>
                 <p className={`${inter.className} text-xl text-white/95 max-w-2xl`}>
-                  Build employee shifts with segments connected to tags. Set complex recurrence patterns.
+                  Build employee shifts with <strong>segments</strong> connected to <strong>tags</strong>. Set complex recurrence patterns.
                 </p>
               </div>
             </div>
@@ -257,7 +258,7 @@ Scroll to see how our intuitive two-layer tagging system makes scheduling effort
                   Team Schedule Overview
                 </h2>
                 <p className={`${inter.className} text-xl text-white/95 max-w-2xl`}>
-                  View and manage your team's schedule with our intuitive drag-and-drop interface.
+                  Easily view and manage your entire team's schedule with our intuitive drag-and-drop interface.
                 </p>
               </div>
             </div>
@@ -319,73 +320,15 @@ Scroll to see how our intuitive two-layer tagging system makes scheduling effort
             <div className="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-black/90 via-black/70 to-transparent h-[40%]">
               <div className="absolute bottom-0 left-0 right-0 p-8">
                 <h2 className={`${ptSerif.className} text-4xl font-bold text-white mb-4`}>
-                  Tag Schedule Visualization
+                  Tag Schedule View
                 </h2>
                 <p className={`${inter.className} text-xl text-white/95 max-w-2xl`}>
-                  See who's working where and when with tag view. Automatic schedule population based on user assignments.
+                  Focus on tags. View everyone working a Station or Task for a given time period. Tag schedules are automatically generated.
                 </p>
               </div>
             </div>
           </motion.div>
         </div>
-
-        {/* Final Arrow and CTA */}
-        <motion.div 
-          className="flex flex-col items-center justify-center mt-16 mb-16"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-        >
-          <motion.svg 
-            width="60" 
-            height="60" 
-            viewBox="0 0 24 24" 
-            fill="none" 
-            xmlns="http://www.w3.org/2000/svg"
-            animate={{ 
-              scale: [1, 1.2, 1],
-              opacity: [0.8, 1, 0.8]
-            }}
-            transition={{ 
-              duration: 1.5,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-          >
-            <motion.path
-              d="M12 4L12 20M12 20L6 14M12 20L18 14"
-              stroke="#3B82F6"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              initial={{ pathLength: 0 }}
-              animate={{ pathLength: 1 }}
-              transition={{ duration: 1, ease: "easeInOut" }}
-            />
-          </motion.svg>
-
-          <motion.p 
-            className={`${inter.className} text-xl text-gray-700 text-center max-w-2xl mx-auto mt-8 mb-4`}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.7 }}
-          >
-            Get started for free today. It only takes minutes to register your team and start building schedules.
-          </motion.p>
-
-          <Link href="/signup">
-            <motion.button
-              className="mt-4 px-8 py-4 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-all duration-300 flex items-center gap-2 text-xl font-semibold"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              Get Started Now
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
-            </motion.button>
-          </Link>
-        </motion.div>
       </motion.div>
     </motion.div>
   );
