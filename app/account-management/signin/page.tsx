@@ -14,15 +14,20 @@ export default function SignInPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const result = await signIn("credentials", {
-      redirect: true,
-      email,
-      password,
-      callbackUrl: "/dashboard",
-    });
+    try {
+      const result = await signIn("credentials", {
+        redirect: false,
+        email,
+        password,
+      });
 
-    if (result?.error) {
-      setErrorMsg("Invalid credentials");
+      if (result?.error) {
+        setErrorMsg("Incorrect password");
+      } else {
+        router.push("/dashboard");
+      }
+    } catch (error) {
+      setErrorMsg("An error occurred during sign in");
     }
   };
 
