@@ -1,14 +1,12 @@
 "use client";
-import React, { useState, useMemo } from "react";
+import React, { useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Calendar } from "react-big-calendar";
-import { format, addDays, isToday, isTomorrow, differenceInMinutes, isAfter, isBefore, addMonths } from "date-fns";
+import { format, addMonths } from "date-fns";
 import { Employee } from "@/types/types";
 import dynamic from "next/dynamic";
-import {
-  FiClock,
-} from "react-icons/fi";
 import { RRule } from "rrule";
+import "@/app/styles/calendar.css"
 
 const ScheduleBuilderComponent = dynamic(() => import("../individual-schedule-builder/page"), { ssr: false });
 
@@ -18,81 +16,26 @@ interface MyScheduleTabProps {
   localizer: any;
 }
 
+/**
+ * MyScheduleTab is a client-side component that displays the logged-in user's schedule.
+ *
+ * It handles the following responsibilities:
+ * - Parses the `employeeData` prop to extract and prioritize user shifts (recurring and non-recurring).
+ * - Generates calendar events for use in `react-big-calendar`, showing up to 3 months ahead.
+ * - Dynamically loads a secondary "ScheduleBuilder" component, which is heavier & more interactive.
+ * - Applies custom styling from an external CSS file to improve calendar and layout aesthetics.
+ *
+ * Props:
+ * @param {Employee | null} employeeData - The logged-in user's full shift data and segment info.
+ * @param {string} userName - The name of the current user (used for greeting and schedule matching).
+ * @param {any} localizer - A `dateFns` localizer instance used by `react-big-calendar`.
+ *
+ * @returns {JSX.Element} A styled dashboard tab showing the user's upcoming shifts and calendar.
+ */
+
 export default function MyScheduleTab({ employeeData, userName, localizer }: MyScheduleTabProps) {
-  const [showNextShifts, setShowNextShifts] = useState(true);
 
   const today = new Date();
-
-  const todaysShift = employeeData?.shifts?.find((shift) => {
-    const shiftStart = new Date(shift.startTime);
-    return shiftStart.toDateString() === today.toDateString();
-  });
-
-  const nextShift = useMemo(() => {
-    if (!employeeData?.shifts) return null;
-
-    return employeeData.shifts
-      .filter(shift => {
-        const shiftStart = new Date(shift.startTime);
-        return (isToday(shiftStart) && isAfter(shiftStart, today)) || isAfter(shiftStart, today);
-      })
-      .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())[0];
-  }, [employeeData?.shifts, today]);
-
-  const isCurrentlyWorking = useMemo(() => {
-    if (!todaysShift) return false;
-    const shiftStart = new Date(todaysShift.startTime);
-    const shiftEnd = new Date(todaysShift.endTime);
-    return isBefore(shiftStart, today) && isAfter(shiftEnd, today);
-  }, [todaysShift, today]);
-
-  const currentShiftTime = todaysShift
-    ? `${format(new Date(todaysShift.startTime), "h:mm a")} - ${format(
-      new Date(todaysShift.endTime),
-      "h:mm a"
-    )}`
-    : "Off today";
-
-  const timeRemainingInShift = useMemo(() => {
-    if (!isCurrentlyWorking || !todaysShift) return null;
-    const shiftEnd = new Date(todaysShift.endTime);
-    const minutesRemaining = differenceInMinutes(shiftEnd, today);
-    const hours = Math.floor(minutesRemaining / 60);
-    const minutes = minutesRemaining % 60;
-    return { hours, minutes };
-  }, [isCurrentlyWorking, todaysShift, today]);
-
-  const formatNextShiftDate = (date: Date) => {
-    if (isToday(date)) return "Today";
-    if (isTomorrow(date)) return "Tomorrow";
-    return format(date, "EEEE, MMM d");
-  };
-
-  const upcomingShifts = useMemo(() => {
-    if (!employeeData?.shifts) return [];
-
-    return employeeData.shifts
-      .filter((shift) => {
-        const shiftDate = new Date(shift.startTime);
-        return (
-          ((isToday(shiftDate) && !isCurrentlyWorking) || isAfter(shiftDate, today)) &&
-          isBefore(shiftDate, addDays(today, 7))
-        );
-      })
-      .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
-      .slice(0, 5)
-      .map((shift) => ({
-        date: formatNextShiftDate(new Date(shift.startTime)),
-        day: format(new Date(shift.startTime), "EEE"),
-        fullDate: new Date(shift.startTime),
-        shift: `${format(new Date(shift.startTime), "h:mm a")} - ${format(
-          new Date(shift.endTime),
-          "h:mm a"
-        )}`,
-        segments: shift.segments || [],
-        duration: differenceInMinutes(new Date(shift.endTime), new Date(shift.startTime)) / 60
-      }));
-  }, [employeeData?.shifts, today, isCurrentlyWorking]);
 
   /* ---------- calendarEvents: prefer individual over recurring ---------- */
   const calendarEvents = useMemo(() => {
@@ -166,31 +109,6 @@ export default function MyScheduleTab({ employeeData, userName, localizer }: MyS
     return events;
   }, [employeeData?.shifts]);
 
-
-  const thisWeekHours = useMemo(() => {
-    if (!employeeData?.shifts) return 0;
-
-    const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - today.getDay());
-    startOfWeek.setHours(0, 0, 0, 0);
-
-    const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setDate(startOfWeek.getDate() + 6);
-    endOfWeek.setHours(23, 59, 59, 999);
-
-    return employeeData.shifts
-      .filter(shift => {
-        const shiftStart = new Date(shift.startTime);
-        return shiftStart >= startOfWeek && shiftStart <= endOfWeek;
-      })
-      .reduce((total, shift) => {
-        const start = new Date(shift.startTime);
-        const end = new Date(shift.endTime);
-        const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
-        return total + hours;
-      }, 0);
-  }, [employeeData?.shifts, today]);
-
   if (!employeeData) {
     return (
       <div className="w-full h-64 flex items-center justify-center">
@@ -227,7 +145,6 @@ export default function MyScheduleTab({ employeeData, userName, localizer }: MyS
           </div>
         </div>
       </motion.div>
-
       <AnimatePresence mode="wait">
         <motion.div
           key="schedule"
@@ -267,95 +184,6 @@ export default function MyScheduleTab({ employeeData, userName, localizer }: MyS
           </motion.div>
         </motion.div>
       </AnimatePresence>
-
-      <style jsx global>{`
-        .modern-calendar {
-          font-family: inherit;
-          border: none !important;
-        }
-        .modern-calendar .rbc-header {
-          padding: 10px 3px;
-          font-weight: 500;
-          font-size: 0.85rem;
-          color: #4B5563;
-        }
-        .modern-calendar .rbc-date-cell {
-          padding: 4px 5px 0;
-          font-size: 0.85rem;
-          color: #4B5563;
-        }
-        .modern-calendar .rbc-today {
-          background-color: rgba(59, 130, 246, 0.05);
-        }
-        .modern-calendar .rbc-month-view {
-          border: 1px solid #E5E7EB;
-          border-radius: 8px;
-          overflow: hidden;
-        }
-        .modern-calendar .rbc-event {
-          background-color: #3B82F6;
-          border-radius: 4px;
-          border: none;
-          padding: 2px 5px;
-          font-size: 0.75rem;
-        }
-        .modern-calendar .rbc-event.rbc-selected {
-          background-color: #2563EB;
-        }
-        .modern-calendar .rbc-toolbar button {
-          color: #4B5563;
-          border-color: #E5E7EB;
-          border-radius: 6px;
-        }
-        .modern-calendar .rbc-toolbar button.rbc-active {
-          background-color: #3B82F6;
-          color: white;
-          border-color: #3B82F6;
-        }
-        
-        /* Schedule Builder Styling */
-        .schedule-builder-container {
-          overflow: hidden;
-          border-top: 0;
-          max-height: 600px;
-        }
-        
-        .schedule-builder-container > div {
-          height: auto !important;
-          padding: 0;
-          overflow: auto;
-        }
-        
-        /* Hide the original header from the schedule builder */
-        .schedule-builder-container :global(.bg-gradient-to-r.from-blue-600.to-blue-700) {
-          display: none;
-        }
-        
-        /* Adjust padding and spacing for the builder content */
-        .schedule-builder-container :global(.max-w-7xl) {
-          padding: 0;
-          margin: 0;
-        }
-        
-        /* Remove padding from the schedule builder */
-        .schedule-builder-container :global(.py-6) {
-          padding-top: 0;
-          padding-bottom: 0;
-        }
-        
-        /* Remove space between elements */
-        .schedule-builder-container :global(.flex.flex-col.space-y-6) {
-          margin-bottom: 0;
-          gap: 1rem;
-          margin-top: 0;
-        }
-        
-        /* Remove extra padding from the week toggle component */
-        .schedule-builder-container :global(.bg-white.rounded-xl.shadow-sm.p-4.border.border-gray-100) {
-          padding-top: 0.75rem;
-          padding-bottom: 0.75rem;
-        }
-      `}</style>
     </div>
   );
 }

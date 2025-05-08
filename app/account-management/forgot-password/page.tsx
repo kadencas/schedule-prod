@@ -2,9 +2,35 @@
 
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
+  const [message, setMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const email = e.currentTarget.email.value;
+
+    setIsLoading(true);
+    setMessage("");
+
+    try {
+      const res = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await res.json();
+      setMessage(data.message || "Check your email for the reset link.");
+    } catch (err) {
+      setMessage("An error occurred. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-[#F9F7F4] px-6 overflow-hidden">
@@ -26,18 +52,6 @@ export default function ForgotPasswordPage() {
         <span>Back</span>
       </motion.button>
       <motion.div
-        className="absolute w-64 h-64 bg-blue-200 rounded-full filter blur-3xl"
-        style={{ top: "-100px", left: "-100px", zIndex: 0 }}
-        animate={{ scale: [1, 1.2, 1] }}
-        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-      />
-      <motion.div
-        className="absolute w-48 h-48 bg-green-200 rounded-full filter blur-3xl"
-        style={{ bottom: "-50px", right: "-50px", zIndex: 0 }}
-        animate={{ scale: [1, 1.1, 1] }}
-        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-      />
-      <motion.div
         className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md z-10"
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
@@ -46,10 +60,30 @@ export default function ForgotPasswordPage() {
         <h1 className="text-3xl font-bold mb-6 text-center text-blue-600">
           Forgot Password
         </h1>
-        <p className="text-center text-gray-600">
-          Too bad! You should have been more careful... I haven't built this feature yet. Please contact Kaden.
-        </p>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              Email address
+            </label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              required
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              placeholder="you@example.com"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 transition disabled:opacity-50"
+          >
+            {isLoading ? "Sending..." : "Send Reset Link"}
+          </button>
+          {message && <p className="text-center text-sm text-gray-700">{message}</p>}
+        </form>
       </motion.div>
     </div>
   );
-} 
+}

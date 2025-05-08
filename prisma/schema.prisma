@@ -72,6 +72,8 @@ model users {
   // Opposite fields for time_off_requests relations.
   time_off_requests_as_employee time_off_requests[] @relation("time_off_requests_employeeIdTousers")
   time_off_requests_as_manager  time_off_requests[] @relation("time_off_requests_managerIdTousers")
+
+  passwordResetTokens   PasswordResetToken[]
 }
 
 model work_shifts {
@@ -161,6 +163,15 @@ model Invitation {
 
   // Relation to companies model with explicit relation name.
   company      companies          @relation("CompanyInvitations", fields: [companyId], references: [id])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  user      users    @relation(fields: [userId], references: [id])
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 }
 
 enum RequestStatus {

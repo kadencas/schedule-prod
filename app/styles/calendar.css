@@ -1,0 +1,85 @@
+/* Calendar Styling */
+.modern-calendar {
+    font-family: inherit;
+    border: none !important;
+  }
+  .modern-calendar .rbc-header {
+    padding: 10px 3px;
+    font-weight: 500;
+    font-size: 0.85rem;
+    color: #4B5563;
+  }
+  .modern-calendar .rbc-date-cell {
+    padding: 4px 5px 0;
+    font-size: 0.85rem;
+    color: #4B5563;
+  }
+  .modern-calendar .rbc-today {
+    background-color: rgba(59, 130, 246, 0.05);
+  }
+  .modern-calendar .rbc-month-view {
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .modern-calendar .rbc-event {
+    background-color: #3B82F6;
+    border-radius: 4px;
+    border: none;
+    padding: 2px 5px;
+    font-size: 0.75rem;
+  }
+  .modern-calendar .rbc-event.rbc-selected {
+    background-color: #2563EB;
+  }
+  .modern-calendar .rbc-toolbar button {
+    color: #4B5563;
+    border-color: #E5E7EB;
+    border-radius: 6px;
+  }
+  .modern-calendar .rbc-toolbar button.rbc-active {
+    background-color: #3B82F6;
+    color: white;
+    border-color: #3B82F6;
+  }
+  
+  /* Schedule Builder Styling */
+  .schedule-builder-container {
+    overflow: hidden;
+    border-top: 0;
+    max-height: 600px;
+  }
+  
+  .schedule-builder-container > div {
+    height: auto !important;
+    padding: 0;
+    overflow: auto;
+  }
+  
+  /* You may need to add custom class names manually if targeting Tailwind-generated classes */
+  
+  .schedule-builder-container .bg-gradient-to-r.from-blue-600.to-blue-700 {
+    display: none;
+  }
+  
+  .schedule-builder-container .max-w-7xl {
+    padding: 0;
+    margin: 0;
+  }
+  
+  .schedule-builder-container .py-6 {
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+  
+  .schedule-builder-container .flex.flex-col.space-y-6 {
+    margin-bottom: 0;
+    gap: 1rem;
+    margin-top: 0;
+  }
+  
+  .schedule-builder-container .bg-white.rounded-xl.shadow-sm.p-4.border.border-gray-100 {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
+  
