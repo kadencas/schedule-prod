@@ -1,5 +1,9 @@
 "use client";
 
+export const metadata = {
+    title: 'Reset Password',
+  };
+
 import { useSearchParams, useRouter } from "next/navigation";
 import { useState } from "react";
 
