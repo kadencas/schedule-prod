@@ -136,7 +136,7 @@ const ShiftBox: React.FC<ShiftBoxProps> = ({
       id: uuidv4(),
       label: " ",
       start: newStart,
-      end: newStart + 100,
+      end: newStart + 60,
       color: "#ffffff",
       location: "",
     };
