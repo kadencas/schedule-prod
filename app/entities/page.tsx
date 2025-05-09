@@ -58,6 +58,8 @@ export default function EntitiesPage() {
   const [selectedCoverage, setSelectedCoverage] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingEntity, setEditingEntity] = useState<Entity | null>(null);
   const [name, setName] = useState("");
   const [type, setType] = useState("STATION");
   const [icon, setIcon] = useState<AllowedIcon | "">("");
@@ -145,6 +147,69 @@ export default function EntitiesPage() {
     } finally {
       setFormSubmitting(false);
     }
+  };
+
+  const handleEditEntity = async (e: FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setFormSubmitting(true);
+
+    if (!editingEntity) return;
+
+    const requestBody = {
+      name,
+      type,
+      icon: icon || null,
+      color: color || null,
+      requiresCoverage,
+      minCoverage,
+    };
+
+    try {
+      const response = await fetch(`/api/entities/${editingEntity.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        const msg = await response.json();
+        throw new Error(msg.error || "Failed to update entity");
+      }
+
+      const updatedEntity = await response.json();
+      setEntities((prev) =>
+        prev.map((entity) =>
+          entity.id === updatedEntity.id ? updatedEntity : entity
+        )
+      );
+
+      // Reset form
+      setName("");
+      setType("STATION");
+      setIcon("");
+      setColor("#4F46E5");
+      setRequiresCoverage(false);
+      setMinCoverage(null);
+      setIsEditMode(false);
+      setEditingEntity(null);
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "An error occurred while updating entity.");
+    } finally {
+      setFormSubmitting(false);
+    }
+  };
+
+  const startEditing = (entity: Entity) => {
+    setEditingEntity(entity);
+    setName(entity.name);
+    setType(entity.type);
+    setIcon(entity.icon as AllowedIcon || "");
+    setColor(entity.color || "#4F46E5");
+    setRequiresCoverage(entity.requiresCoverage);
+    setMinCoverage(entity.minCoverage ?? null);
+    setIsEditMode(true);
   };
 
   const resetFilters = () => {
@@ -351,13 +416,24 @@ export default function EntitiesPage() {
                       color: entity.color ? getTextColor(entity.color) : "white"
                     }}
                   >
-                    <div className="flex items-center gap-2">
-                      {IconComponent ? (
-                        <IconComponent size={20} />
-                      ) : (
-                        <FiTag size={20} />
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        {IconComponent ? (
+                          <IconComponent size={20} />
+                        ) : (
+                          <FiTag size={20} />
+                        )}
+                        <span className="truncate">{entity.name}</span>
+                      </div>
+                      {canAddTags && (
+                        <button
+                          onClick={() => startEditing(entity)}
+                          className="p-1 hover:bg-white/20 rounded-lg transition-colors"
+                          title="Edit tag"
+                        >
+                          <FiInfo size={16} />
+                        </button>
                       )}
-                      <span className="truncate">{entity.name}</span>
                     </div>
                   </div>
                   
@@ -392,14 +468,18 @@ export default function EntitiesPage() {
       )}
 
       <AnimatePresence>
-        {isFormOpen && (
+        {(isFormOpen || isEditMode) && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 overflow-y-auto"
             onClick={(e) => {
-              if (e.target === e.currentTarget) setIsFormOpen(false);
+              if (e.target === e.currentTarget) {
+                setIsFormOpen(false);
+                setIsEditMode(false);
+                setEditingEntity(null);
+              }
             }}
           >
             <motion.div
@@ -411,7 +491,11 @@ export default function EntitiesPage() {
               onClick={(e) => e.stopPropagation()}
             >
               <button
-                onClick={() => setIsFormOpen(false)}
+                onClick={() => {
+                  setIsFormOpen(false);
+                  setIsEditMode(false);
+                  setEditingEntity(null);
+                }}
                 className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
                 aria-label="Close modal"
               >
@@ -419,11 +503,15 @@ export default function EntitiesPage() {
               </button>
               
               <div className="mb-6">
-                <h2 className="text-xl font-bold text-gray-800 mb-1">Create New Tag</h2>
-                <p className="text-gray-500 text-sm">Add a new tag to categorize stations and tasks</p>
+                <h2 className="text-xl font-bold text-gray-800 mb-1">
+                  {isEditMode ? "Edit Tag" : "Create New Tag"}
+                </h2>
+                <p className="text-gray-500 text-sm">
+                  {isEditMode ? "Update tag details" : "Add a new tag to categorize stations and tasks"}
+                </p>
               </div>
               
-              <form onSubmit={handleCreateEntity} className="space-y-4">
+              <form onSubmit={isEditMode ? handleEditEntity : handleCreateEntity} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="name">
                     Name
@@ -553,7 +641,11 @@ export default function EntitiesPage() {
                 <div className="flex justify-end space-x-3 pt-4">
                   <button
                     type="button"
-                    onClick={() => setIsFormOpen(false)}
+                    onClick={() => {
+                      setIsFormOpen(false);
+                      setIsEditMode(false);
+                      setEditingEntity(null);
+                    }}
                     className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 text-sm font-medium hover:bg-gray-50 transition-colors"
                     disabled={formSubmitting}
                   >
@@ -567,12 +659,21 @@ export default function EntitiesPage() {
                     {formSubmitting ? (
                       <>
                         <span className="animate-spin h-4 w-4 mr-2 border-2 border-white border-t-transparent rounded-full"></span>
-                        Creating...
+                        {isEditMode ? "Updating..." : "Creating..."}
                       </>
                     ) : (
                       <>
-                        <FiPlus className="mr-1.5" />
-                        Create Tag
+                        {isEditMode ? (
+                          <>
+                            <FiCheckCircle className="mr-1.5" />
+                            Update Tag
+                          </>
+                        ) : (
+                          <>
+                            <FiPlus className="mr-1.5" />
+                            Create Tag
+                          </>
+                        )}
                       </>
                     )}
                   </button>
