@@ -4,7 +4,7 @@ import Draggable, { DraggableEvent, DraggableData } from "react-draggable";
 import { ResizableBox } from "react-resizable";
 import "react-resizable/css/styles.css";
 import SegmentBox from "./segmentBox";
-import { FaCheck, FaPlus, FaRegSave, FaSave, FaUser } from "react-icons/fa";
+import { FaCheck, FaPlus, FaRegSave, FaSave, FaUser, FaTrash, FaExclamationTriangle } from "react-icons/fa";
 import { MdDragIndicator } from "react-icons/md";
 import { v4 as uuidv4 } from 'uuid';
 import { Entity, Segment, Shift } from "@/types/types";
@@ -56,6 +56,50 @@ const SHIFT_HEIGHT = 100;
 const SEGMENT_HEIGHT = 70;
 const MINUTES_PER_PIXEL = 0.6;
 
+const DeleteConfirmationModal: React.FC<{
+  isOpen: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}> = ({ isOpen, onConfirm, onCancel }) => {
+  if (!isOpen) return null;
+
+  return ReactDOM.createPortal(
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg shadow-xl p-6 max-w-sm w-full mx-4 transform transition-all">
+        <div className="flex items-center justify-center mb-4">
+          <div className="bg-red-100 rounded-full p-3">
+            <FaExclamationTriangle className="text-red-600" size={24} />
+          </div>
+        </div>
+        
+        <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">
+          Delete Shift
+        </h3>
+        
+        <p className="text-gray-600 text-center mb-6">
+          Are you sure you want to delete this shift? This action cannot be undone.
+        </p>
+        
+        <div className="flex gap-3 justify-center">
+          <button
+            onClick={onCancel}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+};
+
 const ShiftBox: React.FC<ShiftBoxProps> = ({
   snapToGrid,
   segments = [],
@@ -84,6 +128,7 @@ const ShiftBox: React.FC<ShiftBoxProps> = ({
   const [localIsRecurring, setLocalIsRecurring] = useState(isRecurring);
   const [localRecurrenceRule, setLocalRecurrenceRule] = useState(recurrenceRule);
   const [isRecurrenceMenuOpen, setIsRecurrenceMenuOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   const grid: [number, number] | undefined = snapToGrid ? [25, 25] : undefined;
 
@@ -348,145 +393,185 @@ const ShiftBox: React.FC<ShiftBoxProps> = ({
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
+  const handleDeleteShift = async () => {
+    try {
+      const response = await fetch(`/api/shifts/${shiftId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete shift');
+      }
+
+      // Refresh the page to show the updated state
+      window.location.reload();
+    } catch (error) {
+      console.error('Error deleting shift:', error);
+      alert('Failed to delete shift. Please try again.');
+    }
+  };
+
   return (
-    <Draggable
-      nodeRef={nodeRef}
-      axis="x"
-      grid={grid}
-      position={position}
-      onDrag={!readOnly ? handleDrag : undefined}
-      onStop={!readOnly ? handleDrag : undefined}
-      handle=".shift-drag-handle"
-      cancel=".react-resizable-handle, .segment-container"
-      disabled={readOnly}
-    >
-      <div ref={nodeRef} className="absolute" style={{ width }}>
-        <ResizableBox
-          width={width}
-          height={dynamicHeight}
-          axis="x"
-          resizeHandles={readOnly ? [] : ["e"]}
-          minConstraints={[150, dynamicHeight]}
-          maxConstraints={[1000, dynamicHeight]}
-          onResize={!readOnly ? handleResize : undefined}
-          onResizeStop={!readOnly ? handleResizeStop : undefined}
-        >
-          <div className="w-full h-full backdrop-blur-sm rounded-lg shadow-md overflow-hidden relative border border-gray-200">
-            <div className="shift-drag-handle h-[30px] bg-gradient-to-r from-blue-600 to-blue-500 flex items-center px-3 cursor-move relative">
-              <div className="flex items-center flex-1">
-                <span className="text-white"><FaUser size={12} className="mr-2" /></span>
-                <span className="text-white text-sm font-medium">
-                  {formatTime(dynamicStartTime)} - {formatTime(dynamicEndTime)}
-                </span>
+    <>
+      <Draggable
+        nodeRef={nodeRef}
+        axis="x"
+        grid={grid}
+        position={position}
+        onDrag={!readOnly ? handleDrag : undefined}
+        onStop={!readOnly ? handleDrag : undefined}
+        handle=".shift-drag-handle"
+        cancel=".react-resizable-handle, .segment-container"
+        disabled={readOnly}
+      >
+        <div ref={nodeRef} className="absolute" style={{ width }}>
+          <ResizableBox
+            width={width}
+            height={dynamicHeight}
+            axis="x"
+            resizeHandles={readOnly ? [] : ["e"]}
+            minConstraints={[150, dynamicHeight]}
+            maxConstraints={[1000, dynamicHeight]}
+            onResize={!readOnly ? handleResize : undefined}
+            onResizeStop={!readOnly ? handleResizeStop : undefined}
+          >
+            <div className="w-full h-full backdrop-blur-sm rounded-lg shadow-md overflow-hidden relative border border-gray-200">
+              <div className="shift-drag-handle h-[30px] bg-gradient-to-r from-blue-600 to-blue-500 flex items-center px-3 cursor-move relative">
+                <div className="flex items-center flex-1">
+                  <span className="text-white"><FaUser size={12} className="mr-2" /></span>
+                  <span className="text-white text-sm font-medium">
+                    {formatTime(dynamicStartTime)} - {formatTime(dynamicEndTime)}
+                  </span>
 
-                <span ref={repeatIconRef} className="ml-2">
-                  {localIsRecurring ? (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setIsRecurrenceMenuOpen(true);
-                      }}
-                      className="bg-green-600 hover:bg-green-700 rounded-full p-1 transition-colors duration-200 focus:outline-none"
-                      title={`Repeats: ${getHumanReadableRRule(localRecurrenceRule)}`}
-                    >
-                      <TbRepeat className="text-white" size={12} />
-                    </button>
-                  ) : (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setIsRecurrenceMenuOpen(true);
-                      }}
-                      className="bg-gray-400 hover:bg-gray-500 rounded-full p-1 transition-colors duration-200 focus:outline-none"
-                    >
-                      <TbRepeatOff className="text-white" size={12} />
-                    </button>
-                  )}
-                </span>
+                  <span ref={repeatIconRef} className="ml-2">
+                    {localIsRecurring ? (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsRecurrenceMenuOpen(true);
+                        }}
+                        className="bg-green-600 hover:bg-green-700 rounded-full p-1 transition-colors duration-200 focus:outline-none"
+                        title={`Repeats: ${getHumanReadableRRule(localRecurrenceRule)}`}
+                      >
+                        <TbRepeat className="text-white" size={12} />
+                      </button>
+                    ) : (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsRecurrenceMenuOpen(true);
+                        }}
+                        className="bg-gray-400 hover:bg-gray-500 rounded-full p-1 transition-colors duration-200 focus:outline-none"
+                      >
+                        <TbRepeatOff className="text-white" size={12} />
+                      </button>
+                    )}
+                  </span>
 
-                {!readOnly && (
-                  <div className="absolute right-3 flex gap-1 items-center">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleAddSegment(); }}
-                      className="bg-blue-700 hover:bg-blue-800 text-white rounded-full p-1"
-                      title="Add segment"
-                    >
-                      <FaPlus size={10} />
-                    </button>
+                  {!readOnly && (
+                    <div className="absolute right-3 flex gap-1 items-center">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleAddSegment(); }}
+                        className="bg-blue-700 hover:bg-blue-800 text-white rounded-full p-1"
+                        title="Add segment"
+                      >
+                        <FaPlus size={10} />
+                      </button>
 
-                    {hasChanges && (
-                      <>
-                        {/* Save recurrence (existing behaviour) */}
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleSaveChanges(); }}
-                          className="flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded-md text-xs relative group transition-all duration-200 hover:shadow-md"
-                          title="Save changes to the whole series"
-                        >
-                          Save <FaSave size={14} className="transition-transform group-hover:scale-110" />
-                          <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800/95 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-all duration-200 whitespace-nowrap shadow-lg">
-                            Save changes to the whole series
-                          </span>
-                        </button>
-
-                        {/* NEW: overwrite only this occurrence */}
-                        {localIsRecurring && (
+                      {hasChanges && (
+                        <>
+                          {/* Save recurrence (existing behaviour) */}
                           <button
-                            onClick={(e) => { e.stopPropagation(); handleSaveAsIndividual(); }}
-                            className="flex items-center gap-1.5 bg-amber-600 hover:bg-amber-700 text-white px-2 py-1 rounded-md text-xs relative group transition-all duration-200 hover:shadow-md"
-                            title="Save only this occurrence (overwrite)"
+                            onClick={(e) => { e.stopPropagation(); handleSaveChanges(); }}
+                            className="flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded-md text-xs relative group transition-all duration-200 hover:shadow-md"
+                            title="Save changes to the whole series"
                           >
-                            Overwrite <FaSave size={14} className="transition-transform group-hover:scale-110" />
+                            Save <FaSave size={14} className="transition-transform group-hover:scale-110" />
                             <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800/95 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-all duration-200 whitespace-nowrap shadow-lg">
-                              Save only this occurrence (overwrite)
+                              Save changes to the whole series
                             </span>
                           </button>
-                        )}
-                      </>
-                    )}
 
-                    <MdDragIndicator className="text-white/60" size={16} />
-                  </div>
+                          {/* NEW: overwrite only this occurrence */}
+                          {localIsRecurring && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleSaveAsIndividual(); }}
+                              className="flex items-center gap-1.5 bg-amber-600 hover:bg-amber-700 text-white px-2 py-1 rounded-md text-xs relative group transition-all duration-200 hover:shadow-md"
+                              title="Save only this occurrence (overwrite)"
+                            >
+                              Overwrite <FaSave size={14} className="transition-transform group-hover:scale-110" />
+                              <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800/95 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-all duration-200 whitespace-nowrap shadow-lg">
+                                Save only this occurrence (overwrite)
+                              </span>
+                            </button>
+                          )}
+                        </>
+                      )}
+
+                      <button
+                        onClick={(e) => { 
+                          e.stopPropagation(); 
+                          setIsDeleteModalOpen(true);
+                        }}
+                        className="bg-red-600 hover:bg-red-700 text-white rounded-full p-1 transition-colors duration-200 focus:outline-none"
+                        title="Delete shift"
+                      >
+                        <FaTrash size={10} />
+                      </button>
+
+                      <MdDragIndicator className="text-white/60" size={16} />
+                    </div>
+                  )}
+                </div>
+
+                {!readOnly && isRecurrenceMenuOpen && ReactDOM.createPortal(
+                  <ShiftBoxMenu
+                    isRecurring={localIsRecurring}
+                    recurrenceRule={localRecurrenceRule}
+                    onRecurrenceChange={handleRecurrenceChange}
+                    onClose={() => setIsRecurrenceMenuOpen(false)}
+                    style={menuStyle}
+                  />,
+                  document.body
                 )}
               </div>
+              <div className="relative pt-1 px-1" style={{ height: dynamicHeight - 30 }}>
+                {localSegments.map((seg) => (
+                  <SegmentBox
+                    key={seg.id}
+                    segment={seg}
+                    snapToGrid={snapToGrid}
+                    onUpdate={handleSegmentUpdate}
+                    onColorUpdate={handleColorUpdate}
+                    className="segment-container"
+                    onLabelUpdate={handleLabelUpdate}
+                    shiftStartTime={dynamicStartTime}
+                    minutesPerPixel={MINUTES_PER_PIXEL}
+                    onDelete={handleDeleteSegment}
+                    readOnly={readOnly}
+                    entities={entities}
+                    onEntityUpdate={handleEntityUpdate}
+                    user={(seg as any).user || user}
+                    style={{
+                      top: `${segmentYPositions[seg.id] * SEGMENT_HEIGHT}px`
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          </ResizableBox>
+        </div>
+      </Draggable>
 
-              {!readOnly && isRecurrenceMenuOpen && ReactDOM.createPortal(
-                <ShiftBoxMenu
-                  isRecurring={localIsRecurring}
-                  recurrenceRule={localRecurrenceRule}
-                  onRecurrenceChange={handleRecurrenceChange}
-                  onClose={() => setIsRecurrenceMenuOpen(false)}
-                  style={menuStyle}
-                />,
-                document.body
-              )}
-            </div>
-            <div className="relative pt-1 px-1" style={{ height: dynamicHeight - 30 }}>
-              {localSegments.map((seg) => (
-                <SegmentBox
-                  key={seg.id}
-                  segment={seg}
-                  snapToGrid={snapToGrid}
-                  onUpdate={handleSegmentUpdate}
-                  onColorUpdate={handleColorUpdate}
-                  className="segment-container"
-                  onLabelUpdate={handleLabelUpdate}
-                  shiftStartTime={dynamicStartTime}
-                  minutesPerPixel={MINUTES_PER_PIXEL}
-                  onDelete={handleDeleteSegment}
-                  readOnly={readOnly}
-                  entities={entities}
-                  onEntityUpdate={handleEntityUpdate}
-                  user={(seg as any).user || user}
-                  style={{
-                    top: `${segmentYPositions[seg.id] * SEGMENT_HEIGHT}px`
-                  }}
-                />
-              ))}
-            </div>
-          </div>
-        </ResizableBox>
-      </div>
-    </Draggable>
+      <DeleteConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onConfirm={() => {
+          setIsDeleteModalOpen(false);
+          handleDeleteShift();
+        }}
+        onCancel={() => setIsDeleteModalOpen(false)}
+      />
+    </>
   );
 };
 
