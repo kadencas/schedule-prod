@@ -375,6 +375,33 @@ const SegmentBox: React.FC<SegmentBoxProps> = ({
     return `rgb(${r}, ${g}, ${b})`;
   };
 
+  const calculateLuminance = (r: number, g: number, b: number) => {
+    const [rs, gs, bs] = [r, g, b].map(c => {
+      c = c / 255;
+      return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
+  };
+
+  const isDarkColor = (color: string) => {
+    if (!color || color === '#ffffff' || color === 'white') return false;
+    
+    const r = parseInt(color.substring(1, 3), 16);
+    const g = parseInt(color.substring(3, 5), 16);
+    const b = parseInt(color.substring(5, 7), 16);
+    
+    const luminance = calculateLuminance(r, g, b);
+    return luminance < 0.5;
+  };
+
+  const getTextColorClass = () => {
+    return isDarkColor(localColor) ? 'text-white' : 'text-gray-700';
+  };
+
+  const getTextColorClassLight = () => {
+    return isDarkColor(localColor) ? 'text-white/90' : 'text-gray-600';
+  };
+
   const dragStyles = isDragging ? {
     opacity: 0.9,
     boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
@@ -431,14 +458,14 @@ const SegmentBox: React.FC<SegmentBoxProps> = ({
                   <div className="flex items-center bg-white/80 px-1.5 py-0.5 rounded-md shadow-sm">
                     <EntityIcon size={13} className="text-gray-700 flex-shrink-0" />
                     {canShowEntityName() && (
-                      <span className="ml-1 text-xs font-medium text-gray-700 truncate max-w-[90px]">
+                      <span className="ml-1 text-xs font-semibold text-gray-700 truncate max-w-[90px]">
                         {getEntityNameDisplay()}
                       </span>
                     )}
                   </div>
                 ) : localLabel && localLabel.trim() !== "" ? (
                   <div className="flex items-center bg-white/80 px-1.5 py-0.5 rounded-md shadow-sm">
-                    <span className="text-xs font-medium text-gray-700 truncate max-w-[90px]">
+                    <span className={`text-xs font-semibold ${getTextColorClass()} truncate max-w-[90px]`}>
                       {localLabel}
                     </span>
                   </div>
@@ -476,7 +503,7 @@ const SegmentBox: React.FC<SegmentBoxProps> = ({
             
             {segmentStartTimeStr && segmentEndTimeStr && segmentDuration >= 30 && (
               <div className="flex justify-center items-center">
-                <span className={`text-center font-medium text-gray-600 ${segmentDuration < 45 ? 'text-[9px]' : 'text-[10px]'}`}>
+                <span className={`text-center font-semibold ${getTextColorClassLight()} ${segmentDuration < 45 ? 'text-[10px]' : 'text-[11px]'}`}>
                   {getTimeDisplay()}
                 </span>
               </div>
@@ -485,8 +512,8 @@ const SegmentBox: React.FC<SegmentBoxProps> = ({
             {readOnly && user && segmentDuration >= 30 && (
               <div className="flex items-center justify-center w-full text-[10px] font-medium text-gray-600">
                 <div className="flex items-center flex-shrink-0 overflow-hidden">
-                  <FaUser size={10} className="text-gray-600 mr-0.5 flex-shrink-0" />
-                  <span className="truncate">
+                  <FaUser size={11} className={`${getTextColorClassLight()} mr-0.5 flex-shrink-0`} />
+                  <span className={`truncate ${getTextColorClassLight()} text-[11px] font-semibold`}>
                     {getUserDisplay()}
                   </span>
                 </div>
