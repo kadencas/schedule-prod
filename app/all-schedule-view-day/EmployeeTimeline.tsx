@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 import Timeline from "@/app/individual-schedule-builder/components/timeline";
 import { useShiftManagement } from "@/app/individual-schedule-builder/hooks/useShiftManagement";
 import { Employee, Shift, Segment, Entity } from "@/types/types";
-import { FiCalendar, FiMapPin, FiBriefcase } from "react-icons/fi";
+import { FiCalendar, FiMapPin, FiBriefcase, FiPlus } from "react-icons/fi";
 
 interface EmployeeTimelineProps {
   employee: Employee;
@@ -11,7 +11,6 @@ interface EmployeeTimelineProps {
   readOnly?: boolean;
   entities: Entity[];
 }
-
 
 export default function EmployeeTimeline({
   employee,
@@ -22,7 +21,6 @@ export default function EmployeeTimeline({
 }: EmployeeTimelineProps) {
   const snapToGrid = true;
   const grid_height = 40;
-
 
   const employeeShifts = useMemo(() => {
     if (!employee.shifts || !Array.isArray(employee.shifts)) return [];
@@ -48,6 +46,67 @@ export default function EmployeeTimeline({
     initialWidth,
   } = useShiftManagement(employeeShifts, currentMonday, selectedDay);
 
+  const handleAddShift = async () => {
+    // Map weekday names to their offset from Monday (0 = Monday, 1 = Tuesday, etc.)
+    const dayOffsets: { [key: string]: number } = {
+      Monday: 0,
+      Tuesday: 1,
+      Wednesday: 2,
+      Thursday: 3,
+      Friday: 4,
+      Saturday: 5,
+      Sunday: 6,
+    };
+
+    const offset = dayOffsets[selectedDay];
+    if (offset === undefined) {
+      console.error("Invalid selected day:", selectedDay);
+      return;
+    }
+
+    // Compute the correct shift date by adding the offset to currentMonday
+    const shiftDateObj = new Date(currentMonday);
+    shiftDateObj.setDate(shiftDateObj.getDate() + offset);
+
+    // Set default start time at 9:00 AM
+    const startTime = new Date(shiftDateObj);
+    startTime.setHours(9, 0, 0, 0);
+
+    // Set default end time at 5:00 PM
+    const endTime = new Date(shiftDateObj);
+    endTime.setHours(17, 0, 0, 0);
+
+    const shiftData = {
+      userId: employee.id,
+      shiftDate: shiftDateObj.toISOString(),
+      startTime: startTime.toISOString(),
+      endTime: endTime.toISOString(),
+      isRecurring: false,
+      recurrenceRule: null,
+      recurrenceEndDate: null,
+      notes: "",
+      entity: null,
+    };
+
+    try {
+      const response = await fetch("/api/shifts", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(shiftData),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create shift");
+      }
+
+      // Refresh the page to show the new shift
+      window.location.reload();
+    } catch (error) {
+      console.error("Error creating shift:", error);
+    }
+  };
 
   return (
     <div className="relative overflow-visible flex items-stretch">
@@ -105,7 +164,17 @@ export default function EmployeeTimeline({
           entities={entities}
         />
 
-        
+        {!matchingShift && !readOnly && (
+          <button
+            onClick={handleAddShift}
+            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2
+              flex items-center justify-center px-3 py-1.5 rounded-md 
+              bg-blue-500 hover:bg-blue-600 text-white font-medium text-sm transition-colors"
+          >
+            <FiPlus className="mr-1.5" size={14} />
+            Add Shift
+          </button>
+        )}
       </div>
     </div>
   );
