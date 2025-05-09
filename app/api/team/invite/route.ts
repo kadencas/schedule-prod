@@ -28,6 +28,15 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // in this new workflow we will create a placeholder upon invitation so admin can begin scheduling
+    await prisma.users.create({
+      data: {
+        email,
+        name,
+        companyId,
+      },
+    });
+
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: Number(process.env.SMTP_PORT),

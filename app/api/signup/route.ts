@@ -37,9 +37,9 @@ export async function POST(request: Request) {
       where: { email },
     });
 
-    if (existingUser) {
+    if (!existingUser) {
       return NextResponse.json(
-        { error: "User already exists" },
+        { error: "User not found. Invite may be missing or corrupted." },
         { status: 400 }
       );
     }
@@ -72,12 +72,11 @@ export async function POST(request: Request) {
 
     const passwordHash = await bcrypt.hash(password, 10);
 
-    const user = await prisma.users.create({
+    await prisma.users.update({
+      where: { email },
       data: {
-        email,
         name,
-        passwordHash, 
-        companyId: invitation.companyId, 
+        passwordHash,
       },
     });
 
@@ -87,8 +86,8 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json(
-      { message: "User created successfully", userId: user.id },
-      { status: 201 }
+      { message: "User created successfully", email },
+      { status: 200 }
     );
   } catch (error) {
     console.error("Detailed error creating user:", error);
