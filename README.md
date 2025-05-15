@@ -1,36 +1,36 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-## Getting Started
+# When Scheduling
 
-First, run the development server:
+**When Scheduling** is a flexible, user-friendly scheduling platform designed for teams and organizations. This project supports recurring shifts, segment-level control, and admin-managed scheduling workflows. Built with modern web technologies for speed, reliability, and ease of use. 
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+The application is in development and currently has 20+ early users who are using the app to manage real teams and provide feedback. 
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Features
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Drag-and-drop shift scheduling
+- Recurring and one-time shifts
+- Segment-level customization (e.g., break, lunch, desk)
+- User invitations and role-based views
+- Dark mode support and responsive UI
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## Documentation
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- [User Feedback Log](docs/user-feedback.md)  
+  Real user feedback collected during live testing, along with developer responses and iteration notes.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- [UI Iteration Screenshots](docs/UI-versions)  
+  Screenshots showing the progression of the user interface through various design stages.
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Tech Stack
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Frontend:** React, Tailwind, Framer Motion
+- **Backend:** Next.js (serverless functions), Prisma ORM
+- **Database:** PostgreSQL via Supabase
+- **Authentication:** NextAuth + bcrypt
+- **Email:** Nodemailer + Gmail SMTP
