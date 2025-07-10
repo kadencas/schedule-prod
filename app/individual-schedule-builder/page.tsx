@@ -15,7 +15,16 @@ import { useSession } from "next-auth/react";
 import { Shift } from "@/types/types";
 import { useEntities } from "./hooks/useEntities";
 import { motion } from "framer-motion";
-import { FiCalendar, FiGrid, FiInfo, FiPlus } from "react-icons/fi";
+import { FiCalendar, FiInfo, FiPlus } from "react-icons/fi";
+
+// --- PROPS INTERFACE ---
+// Defines the props that the ScheduleBuilderComponent can accept.
+interface ScheduleBuilderProps {
+  // The date passed down from the parent calendar component.
+  selectedDate?: Date;
+  // A boolean to control the visibility of the component's own header.
+  showHeader?: boolean;
+}
 
 const TimelineHeader = () => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -82,7 +91,9 @@ const TimelineHeader = () => {
   );
 };
 
-export default function Page() {
+// --- COMPONENT SIGNATURE UPDATED ---
+// The component now accepts props, including `showHeader` which defaults to true.
+export default function Page({ selectedDate: dateFromCalendar, showHeader = true }: ScheduleBuilderProps) {
   const [snapToGrid, setSnapToGrid] = useState(true);
   const [currentMonday, setCurrentMonday] = useState<Date>(getMostRecentMonday(new Date()));
   const [selectedDay, setSelectedDay] = useState<string>(defaultSelectedDay);
@@ -99,6 +110,20 @@ export default function Page() {
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  // --- EFFECT TO SYNC WITH CALENDAR PROP ---
+  // This effect runs whenever the `dateFromCalendar` prop changes.
+  useEffect(() => {
+    if (dateFromCalendar) {
+      // 1. Update the week view to the week of the selected date.
+      setCurrentMonday(getMostRecentMonday(dateFromCalendar));
+
+      // 2. Update the selected day of the week.
+      const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+      setSelectedDay(dayNames[dateFromCalendar.getDay()]);
+    }
+  }, [dateFromCalendar]); // Dependency array ensures this runs only when the prop changes.
+
 
   /**
    * anytime fetchedUserShifts changes (backend changes), update the array
@@ -231,7 +256,6 @@ export default function Page() {
     }
   };
 
-  console.log("shifts for processing", userShifts)
   /**
    * Process shifts and segments for the Timeline component.
    */
@@ -273,25 +297,28 @@ export default function Page() {
 
   return (
     <motion.div 
-      className="w-full h-screen bg-gray-50 overflow-auto"
+      className="w-full bg-gray-50 overflow-auto"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
     >
-      {/* Simplified Header */}
-      <motion.div 
-        className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-3 shadow-sm"
-        initial={{ y: -20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.4 }}
-      >
-        <div className="max-w-7xl mx-auto">
-          <h1 className="text-lg font-medium flex items-center">
-            <FiCalendar className="mr-2" />
-            Schedule Builder
-          </h1>
-        </div>
-      </motion.div>
+      {/* --- CONDITIONAL HEADER --- */}
+      {/* The header is now rendered only if the `showHeader` prop is true. */}
+      {showHeader && (
+        <motion.div 
+          className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-3 shadow-sm"
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.4 }}
+        >
+          <div className="max-w-7xl mx-auto">
+            <h1 className="text-lg font-medium flex items-center">
+              <FiCalendar className="mr-2" />
+              Schedule Builder
+            </h1>
+          </div>
+        </motion.div>
+      )}
 
       <div className="max-w-7xl mx-auto px-4 py-3">
         <motion.div 
@@ -300,19 +327,7 @@ export default function Page() {
           animate={isMounted ? "visible" : "hidden"}
           className="flex flex-col"
         >
-          {/* Week Navigation */}
-          <motion.div variants={itemVariants} className="bg-white rounded-lg rounded-b-none shadow-sm p-3 border border-b-0 border-gray-100">
-            <h2 className="text-lg font-bold mb-3">Day Selector & Editor</h2>
-            <WeekDayToggle
-              currentMonday={currentMonday}
-              formattedMondayDate={formattedMondayDate}
-              handlePreviousWeek={handlePreviousWeek}
-              handleNextWeek={handleNextWeek}
-              selectedDay={selectedDay}
-              setSelectedDay={setSelectedDay}
-            />
-          </motion.div>
-
+          
           {/* Main Layout with Timeline and Shift Menu */}
           <div className="flex flex-col md:flex-row">
             {/* Timeline Section - Minimalistic */}

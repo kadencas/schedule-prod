@@ -1,6 +1,11 @@
 
 # When Scheduling
 
+Thanks for checking out my project. 
+
+Working at a Library, I was inspired to make this application to help our team manage 
+
+
 **When Scheduling** is a flexible, user-friendly scheduling platform designed for teams and organizations. This project supports recurring shifts, segment-level control, and admin-managed scheduling workflows. Built with modern web technologies for speed, reliability, and ease of use. 
 
 The application is in development and currently has 20+ early users who are using the app to manage real teams and provide feedback. 
