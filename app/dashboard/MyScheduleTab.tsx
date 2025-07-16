@@ -2,10 +2,11 @@
 import React, { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Calendar } from "react-big-calendar";
-import { format, addMonths } from "date-fns";
+import { format, addMonths, subMonths } from "date-fns";
 import { Employee } from "@/types/types";
 import dynamic from "next/dynamic";
 import { RRule } from "rrule";
+
 import "@/app/styles/calendar.css";
 
 const ScheduleBuilderComponent = dynamic(() => import("../individual-schedule-builder/page"), { ssr: false });
@@ -19,8 +20,8 @@ interface MyScheduleTabProps {
 // Helper to check if two dates are the same day (ignoring time)
 const isSameDay = (d1: Date, d2: Date) => {
   return d1.getFullYear() === d2.getFullYear() &&
-         d1.getMonth() === d2.getMonth() &&
-         d1.getDate() === d2.getDate();
+    d1.getMonth() === d2.getMonth() &&
+    d1.getDate() === d2.getDate();
 };
 
 const CustomDateHeader = ({ label, date, isOffRange, selectedDate }: { label: string; date: Date; isOffRange: boolean; selectedDate: Date }) => {
@@ -33,7 +34,7 @@ const CustomDateHeader = ({ label, date, isOffRange, selectedDate }: { label: st
       <div className={`flex items-center justify-center w-6 h-6 rounded-full transition-all duration-200 ${isSelected ? 'bg-blue-500 text-white font-bold' : 'group-hover:bg-gray-100'}`}>
         <span>{label}</span>
       </div>
-      
+
       {/* 1. Changed opacity-20 to opacity-40 to make it less faint */}
       <div className={`absolute top-1 left-1 opacity-40 group-hover:opacity-100 transition-opacity duration-200 z-10 ${isSelected ? 'hidden' : ''}`}>
         <svg
@@ -56,6 +57,7 @@ export default function MyScheduleTab({ employeeData, userName, localizer }: MyS
   const [selectedDate, setSelectedDate] = useState(new Date());
   const today = new Date();
 
+  const [viewDate, setViewDate] = useState(new Date());
   const handleSelectSlot = (slotInfo: { start: Date }) => {
     setSelectedDate(slotInfo.start);
   };
@@ -116,7 +118,7 @@ export default function MyScheduleTab({ employeeData, userName, localizer }: MyS
 
     return events;
   }, [employeeData?.shifts]);
-  
+
   // --- NEW: A memoized components object that has access to the selectedDate state ---
   // This is passed to the Calendar to customize rendering of the date headers.
   const components = useMemo(() => ({
@@ -161,9 +163,20 @@ export default function MyScheduleTab({ employeeData, userName, localizer }: MyS
           transition={{ duration: 0.3 }}
           className="bg-white rounded-lg shadow-sm border p-2"
         >
+
+          <div className="flex items-center justify-between mb-2">
+            <button onClick={() => setViewDate(d => subMonths(d, 1))}>‹</button>
+            <h2 className="text-lg font-semibold">
+              {format(viewDate, "MMMM yyyy")}
+            </h2>
+            <button onClick={() => setViewDate(d => addMonths(d, 1))}>›</button>
+          </div>
+
           <div className="calendar-container" style={{ height: 400 }}>
             <Calendar
               localizer={localizer}
+              date={viewDate} // 1. FIX: Control the calendar's view with `viewDate`
+              onNavigate={setViewDate} // 2. FIX: Update `viewDate` on calendar navigation events
               events={calendarEvents}
               startAccessor="start"
               endAccessor="end"
@@ -171,11 +184,9 @@ export default function MyScheduleTab({ employeeData, userName, localizer }: MyS
               popup
               selectable
               onSelectSlot={handleSelectSlot}
-              date={selectedDate}
-              onNavigate={(date) => setSelectedDate(date)}
               className="modern-calendar"
-              // --- UPDATED: Use the new memoized components object ---
               components={components}
+              toolbar={false}
             />
           </div>
         </motion.div>

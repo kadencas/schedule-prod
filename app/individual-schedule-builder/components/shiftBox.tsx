@@ -4,7 +4,7 @@ import Draggable, { DraggableEvent, DraggableData } from "react-draggable";
 import { ResizableBox } from "react-resizable";
 import "react-resizable/css/styles.css";
 import SegmentBox from "./segmentBox";
-import { FaCheck, FaPlus, FaRegSave, FaSave, FaUser, FaTrash, FaExclamationTriangle } from "react-icons/fa";
+import { FaCheck, FaPlus, FaRegSave, FaSave, FaUser, FaTrash, FaExclamationTriangle, FaCopy } from "react-icons/fa";
 import { MdDragIndicator } from "react-icons/md";
 import { v4 as uuidv4 } from 'uuid';
 import { Entity, Segment, Shift } from "@/types/types";
@@ -12,6 +12,7 @@ import ShiftBoxMenu from "./shiftBoxMenu";
 import ReactDOM from "react-dom";
 import { TbRepeat, TbRepeatOff } from "react-icons/tb";
 import { RRule } from "rrule";
+import { DuplicateShiftModal, DuplicateParams } from './duplicateShiftModal';
 
 
 interface ShiftBoxProps {
@@ -129,6 +130,35 @@ const ShiftBox: React.FC<ShiftBoxProps> = ({
   const [localRecurrenceRule, setLocalRecurrenceRule] = useState(recurrenceRule);
   const [isRecurrenceMenuOpen, setIsRecurrenceMenuOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDuplicateModalOpen, setIsDuplicateModalOpen] = useState(false);
+
+  const handleDuplicateClick = () => {
+    setIsDuplicateModalOpen(true);
+  };
+
+  const handleDuplicateSubmit = async (params: DuplicateParams) => {
+    console.log("Submitting duplication with params:", params);
+    try {
+      const response = await fetch(`/api/shifts/${shiftId}/duplicate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(params),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to duplicate shift');
+      }
+
+      const result = await response.json();
+      alert(`Successfully created ${result.createdCount} new shifts!`);
+      setIsDuplicateModalOpen(false);
+      window.location.reload(); // Simple way to refresh data
+    } catch (err: any) {
+      console.error('Error duplicating shift:', err);
+      alert(`Error: ${err.message}`);
+    }
+  };
 
   const grid: [number, number] | undefined = snapToGrid ? [25, 25] : undefined;
 
@@ -442,6 +472,8 @@ const ShiftBox: React.FC<ShiftBoxProps> = ({
                   <span className="text-white text-sm font-medium">
                     {formatTime(dynamicStartTime)} - {formatTime(dynamicEndTime)}
                   </span>
+{/*
+
 
                   <span ref={repeatIconRef} className="ml-2">
                     {localIsRecurring ? (
@@ -467,6 +499,7 @@ const ShiftBox: React.FC<ShiftBoxProps> = ({
                       </button>
                     )}
                   </span>
+                  */}
 
                   {!readOnly && (
                     <div className="absolute right-3 flex gap-1 items-center">
@@ -476,6 +509,14 @@ const ShiftBox: React.FC<ShiftBoxProps> = ({
                         title="Add segment"
                       >
                         <FaPlus size={10} />
+                      </button>
+
+                       <button
+                        onClick={(e) => { e.stopPropagation(); handleDuplicateClick(); }}
+                        className="bg-blue-700 hover:bg-blue-800 text-white rounded-full p-1"
+                        title="Duplicate shift"
+                      >
+                        <FaCopy size={10} />
                       </button>
 
                       {hasChanges && (
@@ -570,6 +611,12 @@ const ShiftBox: React.FC<ShiftBoxProps> = ({
           handleDeleteShift();
         }}
         onCancel={() => setIsDeleteModalOpen(false)}
+      />
+      <DuplicateShiftModal
+        isOpen={isDuplicateModalOpen}
+        onClose={() => setIsDuplicateModalOpen(false)}
+        onSubmit={handleDuplicateSubmit}
+        shiftDate={startTime} // Pass the original shift's start time
       />
     </>
   );

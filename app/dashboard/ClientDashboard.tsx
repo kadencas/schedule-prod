@@ -6,59 +6,55 @@ import "react-big-calendar/lib/css/react-big-calendar.css";
 import { Employee } from "@/types/types";
 import MyScheduleTab from "./MyScheduleTab";
 import ViewDayTab from "./ViewDayTab";
-import ViewPeopleTab from "./ViewPeopleTab"
-import ViewEntitiesTab from "./ViewEntitiesTab"
+import ViewPeopleTab from "./ViewPeopleTab";
+import ViewEntitiesTab from "./ViewEntitiesTab";
 import ViewEntitiesScheduleTab from "./ViewEntitiesScheduleTab";
 import { localizer } from "./helpers/calendar";
-
+import App from "../high-level/page";
+import MonthlySchedule from "../month-level/page";
+import MonthlyUserSchedule from "../month-level-user/page";
+import UserSchedule from "../high-level2-user/page";
+import CombinedPage from "../combinedPage/page";  // ← new import
 
 interface ClientDashboardProps {
   companyName: string;
   userName: string;
 }
 
-/**
- * ClientDashboard is a client-side component responsible for rendering the main dashboard UI.
- * 
- * It handles the following:
- * - Displays the company name and user-facing navigation
- * - Fetches the logged-in user's shift data using their userName
- * - Manages tab state (main and sub tabs) to control which section of the dashboard is shown
- * - Displays the appropriate content component based on the selected tab
- * 
- * Props:
- * @param {string} companyName - The name of the company the user belongs to (passed from server)
- * @param {string} userName - The logged-in user's name (used to match and display their shifts)
- * 
- * @returns {JSX.Element} The main interactive dashboard UI
- */
-
 export default function ClientDashboard({ companyName, userName }: ClientDashboardProps) {
-  const [activeMainTab, setActiveMainTab] = useState<"me" | "peopleSchedule" | "tagSchedule" | "management">("me");
-  const [activeSubTab, setActiveSubTab] = useState<"mySchedule" | "viewDay" | "tagsSchedule" | "people" | "tags">("mySchedule");
+  const [activeMainTab, setActiveMainTab] = useState<
+    "me" | "peopleSchedule" | "tagSchedule" | "management" | "combined"
+  >("me");
+  const [activeSubTab, setActiveSubTab] = useState<
+    | "mySchedule"
+    | "viewDay"
+    | "viewWeek"
+    | "viewMonth"
+    | "tagsSchedule"
+    | "tagWeek"
+    | "tagMonth"
+    | "people"
+    | "tags"
+  >("mySchedule");
   const { status } = useSession();
   const [employeeData, setEmployeeData] = useState<Employee | null>(null);
 
-
+  // fetch employee shifts...
   useEffect(() => {
     async function fetchEmployeeShifts() {
       try {
         const res = await fetch("/api/shifts");
         const data = await res.json();
-        const employee = data.employees.find(
-          (e: { name: string }) => e.name === userName
-        );
+        const employee = data.employees.find((e: { name: string }) => e.name === userName);
         setEmployeeData(employee);
       } catch (error) {
         console.error("Error fetching shifts:", error);
       }
     }
-    if (userName !== "Employee") {
-      fetchEmployeeShifts();
-    }
+    if (userName !== "Employee") fetchEmployeeShifts();
   }, [userName]);
 
-
+  // reset sub‑tab on main‑tab change (except combined)
   useEffect(() => {
     switch (activeMainTab) {
       case "me":
@@ -72,6 +68,8 @@ export default function ClientDashboard({ companyName, userName }: ClientDashboa
         break;
       case "management":
         setActiveSubTab("people");
+        break;
+      case "combined":
         break;
     }
   }, [activeMainTab]);
@@ -88,6 +86,7 @@ export default function ClientDashboard({ companyName, userName }: ClientDashboa
 
   return (
     <div className="relative bg-[#F9F7F4] min-h-screen">
+      {/* background blurs */}
       <motion.div
         className="absolute w-64 h-64 bg-blue-200 rounded-full filter blur-3xl opacity-50"
         style={{ top: "-100px", left: "-100px" }}
@@ -100,6 +99,8 @@ export default function ClientDashboard({ companyName, userName }: ClientDashboa
         animate={{ scale: [1, 1.1, 1] }}
         transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
       />
+
+      {/* top nav */}
       <div className="sticky top-0 z-30 w-full bg-white/80 backdrop-blur-sm shadow-sm">
         <div className="max-w-[1600px] mx-auto px-4 flex items-center justify-between h-16">
           <div className="flex items-center">
@@ -109,39 +110,54 @@ export default function ClientDashboard({ companyName, userName }: ClientDashboa
             <nav className="flex space-x-1">
               <button
                 onClick={() => setActiveMainTab("me")}
-                className={`px-4 py-2 rounded-md font-medium text-sm focus:outline-none transition-all duration-200 ${activeMainTab === "me"
-                  ? "bg-blue-600 text-white"
-                  : "text-gray-700 hover:bg-gray-100"
-                  }`}
+                className={`px-4 py-2 rounded-md font-medium text-sm transition-all duration-200 ${
+                  activeMainTab === "me"
+                    ? "bg-blue-600 text-white"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
               >
                 Me
               </button>
               <button
                 onClick={() => setActiveMainTab("peopleSchedule")}
-                className={`px-4 py-2 rounded-md font-medium text-sm focus:outline-none transition-all duration-200 ${activeMainTab === "peopleSchedule"
-                  ? "bg-blue-600 text-white"
-                  : "text-gray-700 hover:bg-gray-100"
-                  }`}
+                className={`px-4 py-2 rounded-md font-medium text-sm transition-all duration-200 ${
+                  activeMainTab === "peopleSchedule"
+                    ? "bg-blue-600 text-white"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
               >
                 Employees Schedule
               </button>
               <button
                 onClick={() => setActiveMainTab("tagSchedule")}
-                className={`px-4 py-2 rounded-md font-medium text-sm focus:outline-none transition-all duration-200 ${activeMainTab === "tagSchedule"
-                  ? "bg-blue-600 text-white"
-                  : "text-gray-700 hover:bg-gray-100"
-                  }`}
+                className={`px-4 py-2 rounded-md font-medium text-sm transition-all duration-200 ${
+                  activeMainTab === "tagSchedule"
+                    ? "bg-blue-600 text-white"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
               >
                 Tags Schedule
               </button>
               <button
                 onClick={() => setActiveMainTab("management")}
-                className={`px-4 py-2 rounded-md font-medium text-sm focus:outline-none transition-all duration-200 ${activeMainTab === "management"
-                  ? "bg-blue-600 text-white"
-                  : "text-gray-700 hover:bg-gray-100"
-                  }`}
+                className={`px-4 py-2 rounded-md font-medium text-sm transition-all duration-200 ${
+                  activeMainTab === "management"
+                    ? "bg-blue-600 text-white"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
               >
                 People & Tags
+              </button>
+              {/* new main tab */}
+              <button
+                onClick={() => setActiveMainTab("combined")}
+                className={`px-4 py-2 rounded-md font-medium text-sm transition-all duration-200 ${
+                  activeMainTab === "combined"
+                    ? "bg-blue-600 text-white"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                Combined
               </button>
             </nav>
           </div>
@@ -154,80 +170,142 @@ export default function ClientDashboard({ companyName, userName }: ClientDashboa
           </button>
         </div>
 
-        <div className="max-w-[1600px] mx-auto px-4 border-t border-gray-100">
-          <div className="flex space-x-1 h-12">
-            {activeMainTab === "me" && (
-              <>
+        {/* sub‑tabs: only show when not on Combined */}
+        {activeMainTab !== "combined" && (
+          <div className="max-w-[1600px] mx-auto px-4 border-t border-gray-100">
+            <div className="flex space-x-1 h-12">
+              {activeMainTab === "me" && (
                 <button
                   onClick={() => setActiveSubTab("mySchedule")}
-                  className={`px-4 py-1.5 rounded-md font-medium text-sm focus:outline-none transition-all duration-200 ${activeSubTab === "mySchedule"
-                    ? "text-blue-600 border-b-2 border-blue-600"
-                    : "text-gray-600 hover:text-blue-500"
-                    }`}
+                  className={`px-4 py-1.5 rounded-md font-medium text-sm transition-all duration-200 ${
+                    activeSubTab === "mySchedule"
+                      ? "text-blue-600 border-b-2 border-blue-600"
+                      : "text-gray-600 hover:text-blue-500"
+                  }`}
                 >
                   My Schedule
                 </button>
-              </>
-            )}
-            {activeMainTab === "peopleSchedule" && (
-              <>
-                <button
-                  onClick={() => setActiveSubTab("viewDay")}
-                  className={`px-4 py-1.5 rounded-md font-medium text-sm focus:outline-none transition-all duration-200 ${activeSubTab === "viewDay"
-                    ? "text-blue-600 border-b-2 border-blue-600"
-                    : "text-gray-600 hover:text-blue-500"
+              )}
+              {activeMainTab === "peopleSchedule" && (
+                <>
+                  <button
+                    onClick={() => setActiveSubTab("viewDay")}
+                    className={`px-4 py-1.5 rounded-md font-medium text-sm transition-all duration-200 ${
+                      activeSubTab === "viewDay"
+                        ? "text-blue-600 border-b-2 border-blue-600"
+                        : "text-gray-600 hover:text-blue-500"
                     }`}
-                >
-                  Daily View
-                </button>
-              </>
-            )}
-            {activeMainTab === "tagSchedule" && (
-              <button
-                onClick={() => setActiveSubTab("tagsSchedule")}
-                className={`px-4 py-1.5 rounded-md font-medium text-sm focus:outline-none transition-all duration-200 ${activeSubTab === "tagsSchedule"
-                  ? "text-blue-600 border-b-2 border-blue-600"
-                  : "text-gray-600 hover:text-blue-500"
-                  }`}
-              >
-                Tags Schedule
-              </button>
-            )}
-            {activeMainTab === "management" && (
-              <>
-                <button
-                  onClick={() => setActiveSubTab("people")}
-                  className={`px-4 py-1.5 rounded-md font-medium text-sm focus:outline-none transition-all duration-200 ${activeSubTab === "people"
-                    ? "text-blue-600 border-b-2 border-blue-600"
-                    : "text-gray-600 hover:text-blue-500"
+                  >
+                    Daily View
+                  </button>
+                  <button
+                    onClick={() => setActiveSubTab("viewWeek")}
+                    className={`px-4 py-1.5 rounded-md font-medium text-sm transition-all duration-200 ${
+                      activeSubTab === "viewWeek"
+                        ? "text-blue-600 border-b-2 border-blue-600"
+                        : "text-gray-600 hover:text-blue-500"
                     }`}
-                >
-                  People
-                </button>
-                <button
-                  onClick={() => setActiveSubTab("tags")}
-                  className={`px-4 py-1.5 rounded-md font-medium text-sm focus:outline-none transition-all duration-200 ${activeSubTab === "tags"
-                    ? "text-blue-600 border-b-2 border-blue-600"
-                    : "text-gray-600 hover:text-blue-500"
+                  >
+                    Weekly View
+                  </button>
+                  <button
+                    onClick={() => setActiveSubTab("viewMonth")}
+                    className={`px-4 py-1.5 rounded-md font-medium text-sm transition-all duration-200 ${
+                      activeSubTab === "viewMonth"
+                        ? "text-blue-600 border-b-2 border-blue-600"
+                        : "text-gray-600 hover:text-blue-500"
                     }`}
-                >
-                  Tags
-                </button>
-              </>
-            )}
+                  >
+                    Monthly View
+                  </button>
+                </>
+              )}
+              {activeMainTab === "tagSchedule" && (
+                <>
+                  <button
+                    onClick={() => setActiveSubTab("tagsSchedule")}
+                    className={`px-4 py-1.5 rounded-md font-medium text-sm transition-all duration-200 ${
+                      activeSubTab === "tagsSchedule"
+                        ? "text-blue-600 border-b-2 border-blue-600"
+                        : "text-gray-600 hover:text-blue-500"
+                    }`}
+                  >
+                    Daily View
+                  </button>
+                  <button
+                    onClick={() => setActiveSubTab("tagWeek")}
+                    className={`px-4 py-1.5 rounded-md font-medium text-sm transition-all duration-200 ${
+                      activeSubTab === "tagWeek"
+                        ? "text-blue-600 border-b-2 border-blue-600"
+                        : "text-gray-600 hover:text-blue-500"
+                    }`}
+                  >
+                    Weekly View
+                  </button>
+                  <button
+                    onClick={() => setActiveSubTab("tagMonth")}
+                    className={`px-4 py-1.5 rounded-md font-medium text-sm transition-all duration-200 ${
+                      activeSubTab === "tagMonth"
+                        ? "text-blue-600 border-b-2 border-blue-600"
+                        : "text-gray-600 hover:text-blue-500"
+                    }`}
+                  >
+                    Monthly View
+                  </button>
+                </>
+              )}
+              {activeMainTab === "management" && (
+                <>
+                  <button
+                    onClick={() => setActiveSubTab("people")}
+                    className={`px-4 py-1.5 rounded-md font-medium text-sm transition-all duration-200 ${
+                      activeSubTab === "people"
+                        ? "text-blue-600 border-b-2 border-blue-600"
+                        : "text-gray-600 hover:text-blue-500"
+                    }`}
+                  >
+                    People
+                  </button>
+                  <button
+                    onClick={() => setActiveSubTab("tags")}
+                    className={`px-4 py-1.5 rounded-md font-medium text-sm transition-all duration-200 ${
+                      activeSubTab === "tags"
+                        ? "text-blue-600 border-b-2 border-blue-600"
+                        : "text-gray-600 hover:text-blue-500"
+                    }`}
+                  >
+                    Tags
+                  </button>
+                </>
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
-      <main className="max-w-[1600px] mx-auto p-6 z-10 relative">
-        {/* Tab Content */}
-        <div className="p-6 w-full">
-          {activeSubTab === "mySchedule" && (<MyScheduleTab employeeData={employeeData} userName={userName} localizer={localizer} />)}
-          {activeSubTab === "viewDay" && <ViewDayTab />}
-          {activeSubTab === "tagsSchedule" && <ViewEntitiesScheduleTab />}
-          {activeSubTab === "people" && <ViewPeopleTab />}
-          {activeSubTab === "tags" && <ViewEntitiesTab />}
-        </div>
+      <main className="w-full mx-auto px-2 py-4 z-10 relative">
+        {/* if Combined is active, render that page */}
+        {activeMainTab === "combined" ? (
+          <CombinedPage />
+        ) : (
+          <div className="p-6 w-full">
+            {activeSubTab === "mySchedule" && (
+              <MyScheduleTab
+                employeeData={employeeData}
+                userName={userName}
+                localizer={localizer}
+              />
+            )}
+            {activeSubTab === "viewDay" && <ViewDayTab />}
+            {activeSubTab === "tagsSchedule" && <ViewEntitiesScheduleTab />}
+            {activeSubTab === "people" && <ViewPeopleTab />}
+            {activeSubTab === "tags" && <ViewEntitiesTab />}
+            {activeSubTab === "tagWeek" && <App />}
+            {activeSubTab === "tagMonth" && <MonthlySchedule />}
+            {activeSubTab === "viewWeek" && <UserSchedule />}
+            {activeSubTab === "viewMonth" && <MonthlyUserSchedule />}
+          </div>
+        )}
       </main>
     </div>
   );
