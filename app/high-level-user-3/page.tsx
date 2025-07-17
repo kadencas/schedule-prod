@@ -5,7 +5,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 // --- Helper Functions ---
 const dateToDayPercentage = (date) => {
   if (!date) return 0;
-  const hours = date.getHours() + date.getMinutes() / 60;
+  // FIX: Use UTC hours and minutes for consistent positioning
+  const hours = date.getUTCHours() + date.getUTCMinutes() / 60;
   const startHour = 7;
   const endHour = 22;
   const clamped = Math.min(Math.max(hours, startHour), endHour);
@@ -229,20 +230,26 @@ export default function UserSchedule() {
   }, []);
 
   const getShiftsForUserAndDay = (userId, dayIndex) => {
-    const startOfWeek = new Date(currentDate);
-    startOfWeek.setDate(startOfWeek.getDate() - (startOfWeek.getDay() === 0 ? 6 : startOfWeek.getDay() - 1));
-    startOfWeek.setHours(0,0,0,0);
-    const targetDate = new Date(startOfWeek);
-    targetDate.setDate(targetDate.getDate() + dayIndex);
+  const startOfWeek = new Date(currentDate);
+  startOfWeek.setDate(startOfWeek.getDate() - (startOfWeek.getDay() === 0 ? 6 : startOfWeek.getDay() - 1));
+  startOfWeek.setHours(0,0,0,0);
+  const targetDate = new Date(startOfWeek);
+  targetDate.setDate(targetDate.getDate() + dayIndex);
 
-    return shifts.filter(shift => {
-      if (shift.userId !== userId) return false;
-      const sd = new Date(shift.startTime);
-      return sd.getFullYear() === targetDate.getFullYear()
-          && sd.getMonth() === targetDate.getMonth()
-          && sd.getDate() === targetDate.getDate();
-    });
-  };
+  return shifts.filter(shift => {
+    if (shift.userId !== userId) return false;
+    
+    // FIX: Parse the shift's startTime as UTC
+    // Note: This assumes your API sends a standard ISO string like 'YYYY-MM-DDTHH:mm:ss.sssZ'
+    // If not, you may need a helper like `new Date(shift.startTime.replace(' ', 'T') + 'Z')`
+    const shiftDate = new Date(shift.startTime);
+    
+    // FIX: Compare UTC date components instead of local ones
+    return shiftDate.getUTCFullYear() === targetDate.getUTCFullYear()
+        && shiftDate.getUTCMonth() === targetDate.getUTCMonth()
+        && shiftDate.getUTCDate() === targetDate.getUTCDate();
+  });
+};
 
   const handleDaySelect = (idx) => {
     setSelectedDayIndex(prev => (prev === idx ? null : idx));
