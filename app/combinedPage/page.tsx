@@ -7,25 +7,22 @@ import "allotment/dist/style.css";
 import ShiftScheduler from "../shift-builder2/page";
 import EmployeeTimelinePage from "../all-schedule-view-day/page";
 import App from '../high-level2/page';
-import UserSchedule from '../high-level2-user/page';
+import UserSchedule from '../high-level-user-3/page';
 
 export default function CombinedPage() {
   return (
     <div className="h-screen bg-zinc-50">
-      <Allotment vertical defaultSizes={[35, 65]}>
-        
-        {/* Top Pane */}
-        <Allotment.Pane minSize={100}>
-          {/* 👇 The flex container is replaced with a nested Allotment */}
-          <Allotment>
-            {/* Left Pane (in top section) */}
+      {/* Outer vertical split: top 50%, bottom 50% */}
+      <Allotment vertical defaultSizes={[30, 70]}>
+
+        {/* Top half: 2 panes @ 50/50 */}
+        <Allotment.Pane>
+          <Allotment defaultSizes={[50, 50]}>
             <Allotment.Pane minSize={100}>
               <div className="h-full overflow-auto">
                 <App />
               </div>
             </Allotment.Pane>
-
-            {/* Right Pane (in top section) */}
             <Allotment.Pane minSize={100}>
               <div className="h-full overflow-auto">
                 <UserSchedule />
@@ -34,11 +31,21 @@ export default function CombinedPage() {
           </Allotment>
         </Allotment.Pane>
 
-        {/* Bottom Pane */}
-        <Allotment.Pane minSize={100}>
-           <div className="h-full overflow-auto">
-              <EmployeeTimelinePage />
-           </div>
+        {/* Bottom half: 2 panes split vertically @ 50/50 */}
+        <Allotment.Pane>
+          <Allotment vertical defaultSizes={[80, 30]}>
+            <Allotment.Pane minSize={100}>
+              <div className="h-full overflow-auto">
+                <ShiftScheduler />
+
+              </div>
+            </Allotment.Pane>
+            <Allotment.Pane minSize={100}>
+              <div className="h-full overflow-auto">
+                <EmployeeTimelinePage />
+              </div>
+            </Allotment.Pane>
+          </Allotment>
         </Allotment.Pane>
 
       </Allotment>
