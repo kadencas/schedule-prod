@@ -19,8 +19,8 @@ const formatTime = (date) => new Date(date).toLocaleTimeString([], { hour: '2-di
 // --- Icon Components ---
 const CalendarIcon = ({ className }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-       fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-       className={className}>
+    fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+    className={className}>
     <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
     <line x1="16" y1="2" x2="16" y2="6" />
     <line x1="8" y1="2" x2="8" y2="6" />
@@ -29,22 +29,22 @@ const CalendarIcon = ({ className }) => (
 );
 const ChevronLeft = ({ className }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-       fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-       className={className}>
+    fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+    className={className}>
     <path d="m15 18-6-6 6-6" />
   </svg>
 );
 const ChevronRight = ({ className }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-       fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-       className={className}>
+    fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+    className={className}>
     <path d="m9 18 6-6-6-6" />
   </svg>
 );
 const RefreshIcon = ({ className }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-       fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-       className={className}>
+    fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+    className={className}>
     <polyline points="23 4 23 10 17 10" />
     <polyline points="1 20 1 14 7 14" />
     <path d="M3.51 9a9 9 0 0114.13-3.36L23 10" />
@@ -74,7 +74,7 @@ const AddShiftModal = ({ date, onSubmit, onClose }) => {
     }
     onSubmit({ startTime: startDate, endTime: endDate });
   };
-  
+
   const dayName = new Intl.DateTimeFormat('en-US', { weekday: 'long' }).format(date);
   const dateString = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(date);
 
@@ -190,11 +190,11 @@ const ScheduleHeader = ({ currentDate, onPrevWeek, onNextWeek, onToday, onToggle
 
 // --- Mini Calendar ---
 const MiniCalendar = ({ selectedDate, onDateChange, onMonthChange, startOfWeek, endOfWeek }) => {
-  const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-  const daysOfWeek = ["S","M","T","W","T","F","S"];
+  const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const daysOfWeek = ["S", "M", "T", "W", "T", "F", "S"];
   const year = selectedDate.getFullYear();
   const month = selectedDate.getMonth();
-  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
   const firstDayOfMonth = new Date(year, month, 1).getDay();
   const calendarDays = Array.from({ length: firstDayOfMonth }, (_, i) => <div key={`empty-${i}`} />);
   for (let day = 1; day <= daysInMonth; day++) {
@@ -233,24 +233,24 @@ export default function UserSchedule({ date }) {
   const [showCalendar, setShowCalendar] = useState(false);
 
   // whenever the parent gives us a new date, we render that week
-  const [currentDate, setCurrentDate] = useState(date);
+  const [currentDate, setCurrentDate] = useState(date || new Date());
 
-   // if parent ever changes the `date` prop, update our local copy too
-   useEffect(() => {
-     setCurrentDate(date);
-   }, [date]);
+  // if parent ever changes the `date` prop, update our local copy too
+  useEffect(() => {
+    setCurrentDate(date);
+  }, [date]);
 
-   const selectedDayIndex = useMemo(() => {
-  const jsDay = currentDate.getDay();        // 0=Sun,1=Mon…6=Sat
-  return jsDay === 0 ? 6 : jsDay - 1;       // map Sun→6, Mon→0, … Sat→5
-}, [currentDate]);
+  const selectedDayIndex = useMemo(() => {
+    const jsDay = currentDate.getDay();        // 0=Sun,1=Mon…6=Sat
+    return jsDay === 0 ? 6 : jsDay - 1;       // map Sun→6, Mon→0, … Sat→5
+  }, [currentDate]);
 
   const pageVariants = {
     initial: { opacity: 0, y: 10 },
     animate: { opacity: 1, y: 0 },
-    exit:    { opacity: 0, y: -10 }
+    exit: { opacity: 0, y: -10 }
   };
-  
+
   // --- NEW: State for managing the add shift modal ---
   const [modalInfo, setModalInfo] = useState(null); // e.g., { userId: 1, date: Date_object }
 
@@ -276,7 +276,7 @@ export default function UserSchedule({ date }) {
   const getShiftsForUserAndDay = (userId, dayIndex) => {
     const startOfWeek = new Date(currentDate);
     startOfWeek.setDate(startOfWeek.getDate() - (startOfWeek.getDay() === 0 ? 6 : startOfWeek.getDay() - 1));
-    startOfWeek.setHours(0,0,0,0);
+    startOfWeek.setHours(0, 0, 0, 0);
     const targetDate = new Date(startOfWeek);
     targetDate.setDate(targetDate.getDate() + dayIndex);
 
@@ -317,79 +317,79 @@ export default function UserSchedule({ date }) {
     setModalInfo(null); // Close modal on success
   };
 
-  
-  
+
+
   const startOfWeek = new Date(currentDate);
   startOfWeek.setDate(startOfWeek.getDate() - (startOfWeek.getDay() === 0 ? 6 : startOfWeek.getDay() - 1));
-  startOfWeek.setHours(0,0,0,0);
+  startOfWeek.setHours(0, 0, 0, 0);
   const endOfWeek = new Date(startOfWeek);
   endOfWeek.setDate(endOfWeek.getDate() + 6);
-  endOfWeek.setHours(23,59,59,999);
+  endOfWeek.setHours(23, 59, 59, 999);
 
-  const weekDays = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const filteredUsers = users.filter(u => u.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
   return (
-     <AnimatePresence exitBeforeEnter>
-          <motion.div
-             key={startOfWeek.toDateString()}         // ← this makes React unmount/remount
-            initial="initial"
-            animate="animate"
-            exit="exit"
-            variants={pageVariants}
-            transition={{ duration: 0.3 }}
-            className="bg-gray-50 min-h-screen p-1 sm:p-1 lg:p-2 font-sans"
-          >
-    <div className="bg-gray-50 min-h-screen p-1 sm:p-1 lg:p-2 font-sans">
-      <div className="max-w-7xl mx-auto">
-        <ScheduleHeader currentDate={currentDate} onPrevWeek={handlePrevWeek} onNextWeek={handleNextWeek} onToday={handleToday} onToggleCalendar={() => setShowCalendar(!showCalendar)} onRefresh={fetchScheduleData} />
+    <AnimatePresence exitBeforeEnter>
+      <motion.div
+        key={startOfWeek.toDateString()}         // ← this makes React unmount/remount
+        initial="initial"
+        animate="animate"
+        exit="exit"
+        variants={pageVariants}
+        transition={{ duration: 0.3 }}
+        className="bg-gray-50 min-h-screen p-1 sm:p-1 lg:p-2 font-sans"
+      >
+        <div className="bg-gray-50 min-h-screen p-1 sm:p-1 lg:p-2 font-sans">
+          <div className="max-w-7xl mx-auto">
+            <ScheduleHeader currentDate={currentDate} onPrevWeek={handlePrevWeek} onNextWeek={handleNextWeek} onToday={handleToday} onToggleCalendar={() => setShowCalendar(!showCalendar)} onRefresh={fetchScheduleData} />
 
-        {showCalendar && <MiniCalendar selectedDate={currentDate} onDateChange={handleDateChange} onMonthChange={handleMonthChange} startOfWeek={startOfWeek} endOfWeek={endOfWeek} />}
-        
-        {/* --- NEW: Render the modal when modalInfo is set --- */}
-        {modalInfo && <AddShiftModal date={modalInfo.date} onSubmit={handleAddShift} onClose={() => setModalInfo(null)} />}
+            {showCalendar && <MiniCalendar selectedDate={currentDate} onDateChange={handleDateChange} onMonthChange={handleMonthChange} startOfWeek={startOfWeek} endOfWeek={endOfWeek} />}
 
-        <div className="bg-white p-3 rounded-xl shadow-sm">
-          <div className="mb-2">
-            <input type="text" placeholder="Search users..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full px-2 py-1 border border-gray-300 rounded-md text-xs focus:outline-none focus:ring" />
-          </div>
+            {/* --- NEW: Render the modal when modalInfo is set --- */}
+            {modalInfo && <AddShiftModal date={modalInfo.date} onSubmit={handleAddShift} onClose={() => setModalInfo(null)} />}
 
-          <div className="grid grid-cols-9 gap-1 mb-1 border-b pb-1">
-            <div className="col-span-2 font-semibold text-gray-600 text-xs">User</div>
-            {weekDays.map((day, idx) => (
-              <button key={day} className={`col-span-1 text-center font-semibold text-xs rounded-md p-1 transition-all duration-200 ease-in-out ${ selectedDayIndex === idx ? 'bg-sky-100 text-sky-700 shadow-sm' : 'text-gray-600 hover:bg-gray-100' }`}>
-                {day}
-              </button>
-            ))}
-          </div>
+            <div className="bg-white p-3 rounded-xl shadow-sm">
+              <div className="mb-2">
+                <input type="text" placeholder="Search users..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full px-2 py-1 border border-gray-300 rounded-md text-xs focus:outline-none focus:ring" />
+              </div>
 
-          {isLoading ? <div className="text-center p-4 text-gray-500 text-xs">Loading schedule...</div>
-           : error ? <div className="text-center p-4 text-red-500 text-xs">Error: {error}</div>
-           : (
-            <div className="space-y-1">
-              {filteredUsers.length > 0 ? (
-                filteredUsers.map(user => (
-                  <div key={user.id} className="grid grid-cols-9 gap-1 items-center">
-                    <div className="col-span-2 text-xs font-medium text-gray-700">{user.name}</div>
-                    {weekDays.map((_, idx) => (
-                      <div
-                        key={`${user.id}-${idx}`}
-                        // --- NEW: onClick handler to open the modal ---
-                        onClick={() => handleOpenModal(user.id, idx)}
-                        className={`col-span-1 w-full h-full flex items-center p-1 rounded-md transition-all duration-200 ease-in-out cursor-pointer hover:bg-gray-100 ${ selectedDayIndex === idx ? 'bg-sky-50/75 shadow-md' : '' }`}
-                      >
-                        <ShiftBar shifts={getShiftsForUserAndDay(user.id, idx)} />
-                      </div>
-                    ))}
-                  </div>
-                ))
-              ) : <div className="text-center text-gray-500 py-4 text-xs">No users found.</div>}
+              <div className="grid grid-cols-9 gap-1 mb-1 border-b pb-1">
+                <div className="col-span-2 font-semibold text-gray-600 text-xs">User</div>
+                {weekDays.map((day, idx) => (
+                  <button key={day} className={`col-span-1 text-center font-semibold text-xs rounded-md p-1 transition-all duration-200 ease-in-out ${selectedDayIndex === idx ? 'bg-sky-100 text-sky-700 shadow-sm' : 'text-gray-600 hover:bg-gray-100'}`}>
+                    {day}
+                  </button>
+                ))}
+              </div>
+
+              {isLoading ? <div className="text-center p-4 text-gray-500 text-xs">Loading schedule...</div>
+                : error ? <div className="text-center p-4 text-red-500 text-xs">Error: {error}</div>
+                  : (
+                    <div className="space-y-1">
+                      {filteredUsers.length > 0 ? (
+                        filteredUsers.map(user => (
+                          <div key={user.id} className="grid grid-cols-9 gap-1 items-center">
+                            <div className="col-span-2 text-xs font-medium text-gray-700">{user.name}</div>
+                            {weekDays.map((_, idx) => (
+                              <div
+                                key={`${user.id}-${idx}`}
+                                // --- NEW: onClick handler to open the modal ---
+                                onClick={() => handleOpenModal(user.id, idx)}
+                                className={`col-span-1 w-full h-full flex items-center p-1 rounded-md transition-all duration-200 ease-in-out cursor-pointer hover:bg-gray-100 ${selectedDayIndex === idx ? 'bg-sky-50/75 shadow-md' : ''}`}
+                              >
+                                <ShiftBar shifts={getShiftsForUserAndDay(user.id, idx)} />
+                              </div>
+                            ))}
+                          </div>
+                        ))
+                      ) : <div className="text-center text-gray-500 py-4 text-xs">No users found.</div>}
+                    </div>
+                  )}
             </div>
-          )}
+          </div>
         </div>
-      </div>
-    </div>
-        </motion.div>
-        </AnimatePresence>
+      </motion.div>
+    </AnimatePresence>
   );
 }

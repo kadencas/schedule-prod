@@ -251,7 +251,7 @@ export default function App({ date }) {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [showCalendar, setShowCalendar] = useState(false);
-  const [currentDate, setCurrentDate] = useState(date);
+  const [currentDate, setCurrentDate] = useState(date || new Date());
 
   // if parent ever changes the `date` prop, update our local copy too
   useEffect(() => {
@@ -415,7 +415,6 @@ export default function App({ date }) {
                     {weekDays.map((_, idx) => (
                       <div
                         key={idx}
-                        onClick={() => handleOpenModal(ent.id, idx)}
                         className={`
            col-span-1 w-full flex items-center p-1 rounded transition
            ${idx === selectedDayIndex
