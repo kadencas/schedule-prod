@@ -270,27 +270,43 @@ export default function ShiftBuilderPage() {
   }, [createNewShift]);
 
   const handleSaveAll = async () => {
-    setIsSaving(true);
-    try {
-      const res = await fetch('/api/sendListShifts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(shifts)
-      });
-      if (!res.ok) {
-        const { error } = await res.json();
-        throw new Error(error || 'Save failed');
-      }
-      const { count } = await res.json();
-      alert(`Saved ${count} shifts!`);
-      // Reset to default state after saving
-      setShifts([createNewShift()]);
-    } catch (e) {
-      alert(`Error: ${e instanceof Error ? e.message : 'Unknown'}`);
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  setIsSaving(true);
+  try {
+    // Create a new payload with converted UTC times
+    const payload = shifts.map(shift => {
+      // Create local Date objects
+      const localStartTime = new Date(`${shift.shiftDate}T${shift.startTime}`);
+      const localEndTime = new Date(`${shift.shiftDate}T${shift.endTime}`);
+
+      // Create a new shift object with UTC ISO strings
+      return {
+        ...shift,
+        startTime: localStartTime.toISOString(), // Converts "9:00 AM EDT" to "13:00:00Z"
+        endTime: localEndTime.toISOString(),   // Converts "5:00 PM EDT" to "21:00:00Z"
+        segments: shift.segments.map(seg => {
+            const localSegStart = new Date(`${shift.shiftDate}T${seg.startTime}`);
+            const localSegEnd = new Date(`${shift.shiftDate}T${seg.endTime}`);
+            return {
+                ...seg,
+                startTime: localSegStart.toISOString(),
+                endTime: localSegEnd.toISOString()
+            };
+        })
+      };
+    });
+
+    const res = await fetch('/api/sendListShifts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload) // Send the new payload with UTC strings
+    });
+    // ... rest of the function
+  } catch (e) {
+    // ... error handling
+  } finally {
+    setIsSaving(false);
+  }
+};
 
   const handleAddShift = ()=>setShifts(prev=>[...prev,createNewShift()]);
   const handleRemoveShift = (id:string)=>setShifts(prev=>prev.length>1?prev.filter(s=>s.id!==id):prev);

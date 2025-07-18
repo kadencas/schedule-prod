@@ -5,7 +5,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 // --- Helper Functions ---
 const dateToDayPercentage = (date) => {
   if (!date) return 0;
-  // Map 7:00–22:00 onto 0–100% using local time
+  // FIX: Ensure this uses local hours to match the local-time tooltip
   const hours = date.getHours() + date.getMinutes() / 60;
   const startHour = 7;
   const endHour = 22;

@@ -5,8 +5,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 // --- Helper Functions ---
 const dateToDayPercentage = (date) => {
   if (!date) return 0;
-  // FIX: Use UTC hours and minutes for consistent positioning
-  const hours = date.getUTCHours() + date.getUTCMinutes() / 60;
+  // FIX: Use local hours to match the local-time tooltip
+  const hours = date.getHours() + date.getMinutes() / 60;
   const startHour = 7;
   const endHour = 22;
   const clamped = Math.min(Math.max(hours, startHour), endHour);

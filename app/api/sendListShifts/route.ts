@@ -32,8 +32,8 @@ export async function POST(request: Request) {
 
             // Construct full DateTime strings for Prisma
             const shiftDateStr = shift.shiftDate; // "YYYY-MM-DD"
-            const startDateTime = new Date(`${shiftDateStr}T${shift.startTime}:00Z`); // Append Z
-            const endDateTime = new Date(`${shiftDateStr}T${shift.endTime}:00Z`);   // Append Z
+            const startDateTime = new Date(shift.startTime); // e.g., new Date("2025-07-18T13:00:00.000Z")
+            const endDateTime = new Date(shift.endTime);
 
             // Upsert the shift record using the user's companyId
             await prisma.work_shifts.upsert({
@@ -61,8 +61,8 @@ export async function POST(request: Request) {
             const segments = Array.isArray(shift.segments) ? shift.segments : [];
             for (const seg of segments) {
                 if (!seg.id) continue;
-                const segStart = new Date(`${shiftDateStr}T${seg.startTime}:00Z`); // Append Z
-                const segEnd = new Date(`${shiftDateStr}T${seg.endTime}:00Z`);   // Append Z
+                const segStart = new Date(seg.startTime);
+                const segEnd = new Date(seg.endTime);
                 await prisma.segments.upsert({
                     where: { id: seg.id },
                     update: {
