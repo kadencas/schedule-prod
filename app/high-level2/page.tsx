@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { AnimatePresence, motion } from "framer-motion";
 
 // --- Helper Functions ---
 const dateToDayPercentage = (date) => {
@@ -38,9 +39,9 @@ const formatDate = (date) => date.toISOString().split('T')[0];
 // --- Icon Components ---
 const CalendarIcon = ({ className }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-       viewBox="0 0 24 24" fill="none" stroke="currentColor"
-       strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-       className={className}>
+    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+    className={className}>
     <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
     <line x1="16" y1="2" x2="16" y2="6" />
     <line x1="8" y1="2" x2="8" y2="6" />
@@ -49,25 +50,25 @@ const CalendarIcon = ({ className }) => (
 );
 const ChevronLeft = ({ className }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-       viewBox="0 0 24 24" fill="none" stroke="currentColor"
-       strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-       className={className}>
+    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+    className={className}>
     <path d="m15 18-6-6 6-6" />
   </svg>
 );
 const ChevronRight = ({ className }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-       viewBox="0 0 24 24" fill="none" stroke="currentColor"
-       strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-       className={className}>
+    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+    className={className}>
     <path d="m9 18 6-6-6-6" />
   </svg>
 );
 const RefreshIcon = ({ className }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-       viewBox="0 0 24 24" fill="none" stroke="currentColor"
-       strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-       className={className}>
+    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+    className={className}>
     <polyline points="23 4 23 10 17 10" />
     <polyline points="1 20 1 14 7 14" />
     <path d="M3.51 9a9 9 0 0114.13-3.36L23 10" />
@@ -189,16 +190,16 @@ const MiniCalendar = ({
   endOfWeek
 }) => {
   const monthNames = [
-    "January","February","March","April","May","June",
-    "July","August","September","October","November","December"
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
   ];
-  const daysOfWeek = ["S","M","T","W","T","F","S"];
+  const daysOfWeek = ["S", "M", "T", "W", "T", "F", "S"];
   const year = selectedDate.getFullYear();
   const month = selectedDate.getMonth();
-  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
   const firstDay = new Date(year, month, 1).getDay();
 
-  const days = Array.from({ length: firstDay }, (_, i) => <div key={`e-${i}`}/>);
+  const days = Array.from({ length: firstDay }, (_, i) => <div key={`e-${i}`} />);
   for (let d = 1; d <= daysInMonth; d++) {
     const dt = new Date(year, month, d);
     const ds = formatDate(dt);
@@ -235,7 +236,7 @@ const MiniCalendar = ({
         </button>
       </div>
       <div className="grid grid-cols-7 gap-1 text-center text-xs text-zinc-500 font-semibold">
-        {daysOfWeek.map((d,i) => <div key={i}>{d}</div>)}
+        {daysOfWeek.map((d, i) => <div key={i}>{d}</div>)}
       </div>
       <div className="grid grid-cols-7 gap-y-1 mt-1">{days}</div>
     </div>
@@ -243,21 +244,42 @@ const MiniCalendar = ({
 };
 
 // --- Main App Component ---
-export default function App() {
+export default function App({ date }) {
   const [entities, setEntities] = useState([]);
   const [segments, setSegments] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [currentDate, setCurrentDate] = useState(new Date());
   const [searchTerm, setSearchTerm] = useState('');
   const [showCalendar, setShowCalendar] = useState(false);
+  const [currentDate, setCurrentDate] = useState(date);
+
+  // if parent ever changes the `date` prop, update our local copy too
+  useEffect(() => {
+    setCurrentDate(date);
+  }, [date]);
+
+  // → add this:
+  const selectedDayIndex = useMemo(() => {
+    // JS getDay(): 0=Sun,1=Mon…6=Sat
+    const jsDay = currentDate.getDay();
+    // map Sun→6, Mon→0, Tue→1…Sat→5
+    return jsDay === 0 ? 6 : jsDay - 1;
+  }, [currentDate]);
+
+  const pageVariants = {
+    initial: { opacity: 0, y: 10 },
+    animate: { opacity: 1, y: 0 },
+    exit:    { opacity: 0, y: -10 }
+  };
+
+
 
   const fetchScheduleData = async () => {
     setIsLoading(true);
     setError(null);
     const startOfWeek = new Date(currentDate);
     startOfWeek.setDate(startOfWeek.getDate() - (startOfWeek.getDay() === 0 ? 6 : startOfWeek.getDay() - 1));
-    startOfWeek.setHours(0,0,0,0);
+    startOfWeek.setHours(0, 0, 0, 0);
 
     // Widen the fetch range to get a buffer for timezone differences
     const fetchStart = new Date(startOfWeek);
@@ -309,17 +331,27 @@ export default function App() {
   startOfWeek.setDate(
     startOfWeek.getDate() - (startOfWeek.getDay() === 0 ? 6 : startOfWeek.getDay() - 1)
   );
-  startOfWeek.setHours(0,0,0,0);
+  startOfWeek.setHours(0, 0, 0, 0);
   const endOfWeek = new Date(startOfWeek);
   endOfWeek.setDate(endOfWeek.getDate() + 6);
-  endOfWeek.setHours(23,59,59,999);
+  endOfWeek.setHours(23, 59, 59, 999);
 
-  const weekDays = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const filtered = entities.filter(e =>
     e.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
+    <AnimatePresence exitBeforeEnter>
+      <motion.div
+         key={startOfWeek.toDateString()}         // ← this makes React unmount/remount
+        initial="initial"
+        animate="animate"
+        exit="exit"
+        variants={pageVariants}
+        transition={{ duration: 0.3 }}
+        className="bg-gray-50 min-h-screen p-1 sm:p-1 lg:p-2 font-sans"
+      >
     <div className="bg-gray-50 min-h-screen p-1 sm:p-1 lg:p-2 font-sans">
       <div className="max-w-7xl mx-auto">
         <ScheduleHeader
@@ -354,9 +386,20 @@ export default function App() {
 
           <div className="grid grid-cols-9 gap-1 mb-1 border-b pb-1">
             <div className="col-span-2 font-semibold text-gray-600 text-xs">Entity</div>
-            {weekDays.map(day => (
-              <div key={day} className="text-center font-semibold text-gray-600 col-span-1 text-xs">{day}</div>
+            {weekDays.map((day, idx) => (
+              <div
+                key={day}
+                className={`
+        col-span-1 text-center text-xs font-semibold rounded p-1
+        ${idx === selectedDayIndex
+                    ? 'bg-sky-200 text-sky-800'
+                    : 'text-gray-600 hover:bg-gray-100'}
+       `}
+              >
+                {day}
+              </div>
             ))}
+
           </div>
 
           {isLoading ? (
@@ -370,7 +413,17 @@ export default function App() {
                   <div key={ent.id} className="grid grid-cols-9 gap-1 items-center">
                     <div className="col-span-2 text-xs font-medium text-gray-700">{ent.name}</div>
                     {weekDays.map((_, idx) => (
-                      <div key={idx} className="col-span-1 w-full">
+                      <div
+                        key={idx}
+                        onClick={() => handleOpenModal(ent.id, idx)}
+                        className={`
+           col-span-1 w-full flex items-center p-1 rounded transition
+           ${idx === selectedDayIndex
+                            ? 'bg-sky-50 shadow-inner'
+                            : 'hover:bg-gray-100 cursor-pointer'
+                          }
+         `}
+                      >
                         <CoverageBar segments={getSegmentsForEntityAndDay(ent.id, idx)} />
                       </div>
                     ))}
@@ -384,5 +437,7 @@ export default function App() {
         </div>
       </div>
     </div>
+    </motion.div>
+    </AnimatePresence>
   );
 }
